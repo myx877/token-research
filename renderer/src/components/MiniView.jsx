@@ -1,80 +1,44 @@
-// 迷你模式视图:Codex 周额度圆环、Kimi 双环(外 5 小时/内本周)、DeepSeek 余额,
-// 右侧为各平台 Token 消耗速度(与速度卡片同源:tokensPerMinute + formatTokenRate)。
-// 顶部栏含放大/最小化/关闭三钮;整窗为系统原生拖拽区(拖动顺滑不依赖 JS);
+// 迷你模式视图:顶部为当前平台下拉 + 两种视图(用量进度条 / 占比圆环),
 // 贴边吸附收起后切换为竖条速度柱(柱子越高速度越快),竖条上双击恢复完整模式。
 import React, { useEffect, useRef, useState } from 'react';
-import { useProviders, useDashboard } from '../store.js';
+import { useProviders } from '../store.js';
 import useTokenSpeed from '../hooks/useTokenSpeed.js';
-import { on, send, toggleMini, getEdgeDockState } from '../api.js';
-import { PROVIDER_META, formatTokenRate } from '../lib/token-speed-chart.js';
+import { on, send, toggleMini, getEdgeDockState, getSettings, saveSetting } from '../api.js';
+import MiniUsageView from './MiniUsageView.jsx';
+import MiniShareRing from './MiniShareRing.jsx';
+import useUsageWindows from '../hooks/useUsageWindows.js';
+import useCredentials from '../hooks/useCredentials.js';
+import { readyProviderIds } from '../lib/provider-credentials.mjs';
+import { useSelectedProvider } from '../selection.js';
+import { allProviderIds, orderProviders } from '../lib/providers-meta.js';
+import { PROVIDER_META } from '../lib/token-speed-chart.js';
 import { formatCurrencyAmount } from '../fee-card-money.mjs';
 
-const RING_R = 17;
-const RING_C = 2 * Math.PI * RING_R;
-// 内环与外环相贴:内环外缘(半径+半个线宽)= 外环内缘(17 - 4.5/2 = 14.75)
-const INNER_R = 12.75;
-const INNER_C = 2 * Math.PI * INNER_R;
-// 内环用同色降透明度区分外环
-const KIMI_INNER_COLOR = 'rgba(78, 203, 148, 0.55)';
+const MINI_STYLE_USAGE = 'usage';
+const MINI_STYLE_SHARE = 'share';
+const MINI_STYLE_ORDER = [MINI_STYLE_USAGE, MINI_STYLE_SHARE];
+// 视图切换按钮的"下一个视图"提示(两种视图循环)
+const NEXT_STYLE_LABEL = {
+  [MINI_STYLE_USAGE]: '切换到占比圆环视图',
+  [MINI_STYLE_SHARE]: '切换到用量进度条视图'
+};
 
-// 取指定种类的额度窗口;附加限额(如 Codex 的 Spark)带 name,主额度 name 为 null,优先主额度
-function windowByKind(provider, kind) {
-  const quota = provider && provider.quota;
-  const windows = quota && Array.isArray(quota.windows) ? quota.windows : [];
-  const matches = windows.filter((w) => w && w.kind === kind);
-  return matches.find((w) => !w.name) || matches[0] || null;
+function readMiniStyle(settings) {
+  const raw = settings && settings.window && settings.window.miniStyle;
+  // 「额度圆环 + 速度」视图已按用户要求删除:旧值(rings)一律回落到用量进度条
+  return raw === MINI_STYLE_SHARE ? MINI_STYLE_SHARE : MINI_STYLE_USAGE;
 }
 
-// 剩余比例(0–1);无数据/认证异常返回 null(只画灰轨道)
-function fracOf(win) {
-  if (!win) return null;
-  const limit = Number(win.limit);
-  const remaining = Number(win.remaining);
-  if (!Number.isFinite(limit) || limit <= 0 || !Number.isFinite(remaining)) return null;
-  return Math.max(0, Math.min(1, remaining / limit));
-}
+// (旧的 readMiniStyle 已合并到上方:小窗只剩「用量进度条」与「占比圆环」两种视图)
 
-function Arc({ radius, circumference, frac, color, width }) {
-  if (frac === null) return null;
-  return (
-    <circle
-      cx="22" cy="22" r={radius} fill="none"
-      stroke={color} strokeWidth={width} strokeLinecap="round"
-      strokeDasharray={circumference * frac + ' ' + circumference}
-      transform="rotate(-90 22 22)"
-    />
-  );
-}
 
-function Ring({ outer, inner, color, innerColor }) {
-  const label = outer === null ? '--' : Math.round(outer * 100) + '%';
-  return (
-    <div className="mini-ring-wrap">
-      <svg width="44" height="44" viewBox="0 0 44 44">
-        <circle cx="22" cy="22" r={RING_R} fill="none" stroke="var(--border)" strokeWidth="4.5" />
-        <Arc radius={RING_R} circumference={RING_C} frac={outer} color={color} width={4.5} />
-        {inner !== undefined ? (
-          <>
-            <circle cx="22" cy="22" r={INNER_R} fill="none" stroke="var(--border)" strokeWidth="4" />
-            <Arc radius={INNER_R} circumference={INNER_C} frac={inner} color={innerColor || color} width={4} />
-          </>
-        ) : null}
-      </svg>
-      <span className="mini-ring-label">{label}</span>
-    </div>
-  );
-}
+// 额度圆环视图已按用户要求删除:相关常量(RING_*/INNER_*/KIMI_INNER_COLOR)一并移除
 
-function RowInfo({ pid, rate }) {
-  const meta = PROVIDER_META[pid];
-  return (
-    <div className="mini-row-info">
-      <span className="mini-dot" style={{ background: meta.color }} />
-      <span className="mini-name">{meta.label}</span>
-      <span className="mini-speed">{rate}</span>
-    </div>
-  );
-}
+// 额度圆环视图已删除:quotaWindowOf / fracOf 不再需要
+// (环形的"剩余比例"曾在这里算过一次;现在小窗只有用量进度条与占比圆环两种视图)
+
+// 额度圆环视图已删除:Arc / Ring / RowInfo 三个辅助组件一并移除
+// (它们引用的 RING_*/INNER_*/KIMI_INNER_COLOR 常量也已删除)
 
 // 贴边收起后的竖条:每个平台一条胶囊形轨道(上下半圆端,透明底透出亚克力),
 // 底部彩色填充高度 ∝ 当前速度;固定刻度 1000.0K/min = 100%,超出按满格计。
@@ -104,12 +68,43 @@ function SpeedStrip({ edge, rates, onRestore }) {
   );
 }
 
-export default function MiniView() {
+export default function MiniView({ onBackToHome }) {
   const providers = useProviders();
-  const dashboard = useDashboard('deepseek');
+  // 额度圆环视图删除后,小窗不再需要 DeepSeek 余额(这里曾每轮白拉一次 dashboard)
   const speed = useTokenSpeed();
   const [dock, setDock] = useState(null);
+  // 小窗口内容:默认「用量进度条」(当前平台 今日/本周/本月),可切回旧的「额度圆环」。
+  // 设置项 window.miniStyle 落盘,重启保持;切换即刻生效(本地 state + 广播)。
+  const [style, setStyle] = useState(MINI_STYLE_USAGE);
   const lastClickAt = useRef(0);
+
+  // 「占比」视图的当前平台:与 MiniUsageView 同一规则(全局选择 > 已就绪 > 兜底第一项)。
+  // MiniUsageView 的下拉每次选择都会写回全局,所以这里读全局就够 —— 两个视图不会各看一个平台。
+  const credential = useCredentials();
+  const [globalPick] = useSelectedProvider();
+  const readyIds = readyProviderIds(allProviderIds(), credential);
+  const fallbackIds = orderProviders(allProviderIds().concat((providers || []).map((p) => p && p.id)));
+  const shareProvider = globalPick || readyIds[0] || fallbackIds[0];
+  const shareData = useUsageWindows(shareProvider);
+
+  useEffect(() => {
+    let active = true;
+    getSettings().then((s) => {
+      if (active) setStyle(readMiniStyle(s));
+    }).catch(() => {});
+    const off = on('settings:loaded', (s) => setStyle(readMiniStyle(s)));
+    return () => {
+      active = false;
+      if (typeof off === 'function') off();
+    };
+  }, []);
+
+  const toggleStyle = () => {
+    const index = MINI_STYLE_ORDER.indexOf(style);
+    const next = MINI_STYLE_ORDER[(index + 1) % MINI_STYLE_ORDER.length];
+    setStyle(next);
+    saveSetting('window.miniStyle', next).catch(() => {});
+  };
 
   // 挂载时拉一次停靠快照(广播只在状态变化时推送),之后跟随变化
   useEffect(() => {
@@ -139,11 +134,7 @@ export default function MiniView() {
   (speed && Array.isArray(speed.providers) ? speed.providers : []).forEach((p) => {
     if (p && p.providerId) rawRates[p.providerId] = p.tokensPerMinute;
   });
-  const rateOf = (pid) => {
-    const raw = rawRates[pid];
-    const value = Number(raw);
-    return raw === null || raw === undefined || !Number.isFinite(value) ? '--' : formatTokenRate(value);
-  };
+  // 逐平台速率文案(旧圆环视图用)已删除:贴边竖条直接用 rawRates
 
   // 吸附收起:整窗只留竖条速度柱
   if (dock && dock.state === 'collapsed') {
@@ -154,13 +145,25 @@ export default function MiniView() {
   (Array.isArray(providers) ? providers : []).forEach((p) => {
     if (p && p.id) byId[p.id] = p;
   });
-  const balance = dashboard && dashboard.balance;
+  // 余额展示随圆环视图一起删除
 
   return (
     <div className="mini-view">
       <div className="mini-titlebar">
         <span className="mini-titlebar-text">Token Monitor</span>
         <div className="mini-titlebar-actions">
+          <button
+            className="mini-title-btn"
+            title={NEXT_STYLE_LABEL[style] || '切换视图'}
+            aria-label={NEXT_STYLE_LABEL[style] || '切换视图'}
+            onClick={toggleStyle}
+          >
+            {style === MINI_STYLE_USAGE ? (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="8" /><path d="M12 12 L12 4 A8 8 0 0 1 19 16" /></svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>
+            )}
+          </button>
           <button className="mini-title-btn" title="放大至完整窗口" aria-label="放大至完整窗口" onClick={toggleMini}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
           </button>
@@ -172,27 +175,9 @@ export default function MiniView() {
           </button>
         </div>
       </div>
-      <div className="mini-body">
-        <div className="mini-row">
-          <div className="mini-balance">
-            {balance ? formatCurrencyAmount(balance.currency, balance.total) : '--'}
-          </div>
-          <RowInfo pid="deepseek" rate={rateOf('deepseek')} />
-        </div>
-        <div className="mini-row">
-          <Ring outer={fracOf(windowByKind(byId.codex, 'weekly'))} color={PROVIDER_META.codex.color} />
-          <RowInfo pid="codex" rate={rateOf('codex')} />
-        </div>
-        <div className="mini-row">
-          <Ring
-            outer={fracOf(windowByKind(byId.kimi, '5h'))}
-            inner={fracOf(windowByKind(byId.kimi, 'weekly'))}
-            color={PROVIDER_META.kimi.color}
-            innerColor={KIMI_INNER_COLOR}
-          />
-          <RowInfo pid="kimi" rate={rateOf('kimi')} />
-        </div>
-      </div>
+      {style === MINI_STYLE_USAGE ? <MiniUsageView onBackToHome={onBackToHome} /> : null}
+      {style === MINI_STYLE_SHARE ? <MiniShareRing windows={shareData.windows} /> : null}
+      {/* 「额度圆环 + 速度」视图已按用户要求删除(余额/Codex 周额度/Kimi 双环 + 速度) */}
     </div>
   );
 }

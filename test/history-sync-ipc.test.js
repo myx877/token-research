@@ -213,8 +213,37 @@ test('sync:history 未注入 Codex 运行时回退到通用重扫', async () => 
   assert.ok(summary.kimi && typeof summary.kimi.daysRebuilt === 'number');
 });
 
+test('sync:history:库里有早于保留窗口的数据时给出「建议保留多少天」(实测曾抛 ReferenceError)', async () => {
+  freshHarness();
+  // 真机缺陷:ipc.js 用了 inclusiveBeijingDayCount 却没 import,于是这个分支一进就抛
+  // ReferenceError —— 而它只在"存在更早数据"时才走,恰好是提示唯一该出现的场景。
+  // 复现条件:重建得到的最早日期早于 retentionStartDay(historyDays)。
+  codexRuntime = {
+    rebuildCalls: [],
+    rebuild(opts) {
+      this.rebuildCalls.push(opts);
+      return Promise.resolve({ daysRebuilt: 60, earliestDate: '2026-01-05', passes: 1, records: 9, bytesRead: 9 });
+    }
+  };
+  const deps = buildDeps({ store: makeFakeStore({ data: { historyDays: 7 } }) });
+  setupIPC(deps);
+  const handler = fakeIpc.handleMap.get('sync:history');
+  const summary = await handler({ sender: { send: () => {} } });
+
+  assert.ok(summary.retentionHint, '应给出保留窗口提示: ' + JSON.stringify(summary));
+  assert.equal(summary.retentionHint.historyDays, 7);
+  assert.equal(summary.retentionHint.earliestDate, '2026-01-05');
+  // 建议天数 = 从最早数据到今天的天数(含首尾),必须是个正数且大于当前保留天数
+  assert.ok(Number.isInteger(summary.retentionHint.suggestedDays), 'suggestedDays 必须是整数');
+  assert.ok(summary.retentionHint.suggestedDays > 7, String(summary.retentionHint.suggestedDays));
+});
+
 test('sync:history 处理器编排三路同步并刷新仪表盘(源代码守卫)', () => {
   const ipcSource = fs.readFileSync(path.resolve(__dirname, '../src/main/ipc.js'), 'utf8');
+  // 用了就必须 import:这条守卫专门盯"符号未导入"这类只在特定分支炸的缺陷
+  if (/inclusiveBeijingDayCount\(/.test(ipcSource)) {
+    assert.match(ipcSource, /require\('\.\/core\/beijing-calendar'\)[\s\S]*inclusiveBeijingDayCount|inclusiveBeijingDayCount[\s\S]*require\('\.\/core\/beijing-calendar'\)/);
+  }
   assert.match(ipcSource, /ipcMain\.handle\('sync:history'/);
   assert.match(ipcSource, /require\('\.\/core\/history-sync'\)/);
   assert.match(ipcSource, /syncDeepSeekHistory\(/);

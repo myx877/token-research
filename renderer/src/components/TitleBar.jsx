@@ -1,10 +1,18 @@
-// 标题栏:刷新/设置/布局编辑/最小化/关闭按钮,图标沿用旧 SVG。
+// 标题栏:退回按钮 + 刷新/设置/最小化/关闭。
 // 关闭按钮行为与旧版一致(隐藏到托盘 = window:minimize)。
-// 刷新/设置点击有短暂图标动画;布局编辑按钮切换激活外观表示"编排中"。
+//
+// **这里刻意不做服务商切换控件**:标题栏只有 34px 高,放一排标签在默认的 420px 窗口里
+// 必然挤成一串认不出的色点;而单平台视图卡片里本来就有个带名字的下拉(展示平台)——
+// 同一个动作放两处,除了重复没有任何好处。切换入口统一收敛到:
+//   · 卡片里的「展示平台 ▾」(当前平台、全部平台都在里面)
+//   · 左下角这个 ‹ 退回服务商列表,列表就是"上一级"
 import React, { useState } from 'react';
 import { send, toggleMini } from '../api.js';
 
-export default function TitleBar({ editing, layoutLocked, onToggleLayoutEdit }) {
+export default function TitleBar({
+  // 布局编辑已按用户要求移除(聚合网格删除后编辑模式没有作用对象)
+  listOpen, onBack
+}) {
   const [spinning, setSpinning] = useState(false);
   const [gearTap, setGearTap] = useState(false);
 
@@ -30,6 +38,18 @@ export default function TitleBar({ editing, layoutLocked, onToggleLayoutEdit }) 
           </svg>
         </span>
         <span className="titlebar-text">Token Monitor</span>
+        {/* 退回上一级:只在详情页出现(首页就是列表,没有可退的地方) */}
+        {!listOpen ? (
+          <button
+            type="button"
+            className="titlebar-back"
+            title="返回服务商列表"
+            aria-label="返回服务商列表"
+            onClick={onBack}
+          >
+            ‹
+          </button>
+        ) : null}
       </div>
       <div className="titlebar-actions">
         <button
@@ -39,17 +59,6 @@ export default function TitleBar({ editing, layoutLocked, onToggleLayoutEdit }) 
           onAnimationEnd={() => setSpinning(false)}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
-        </button>
-        <button
-          className={'titlebar-btn titlebar-btn-layout' + (editing && !layoutLocked ? ' active' : '')}
-          title={layoutLocked ? '布局已锁定' : (editing ? '完成布局编排' : '编辑布局')}
-          aria-label="编辑布局"
-          aria-pressed={editing && !layoutLocked ? 'true' : 'false'}
-          aria-disabled={layoutLocked ? 'true' : 'false'}
-          disabled={layoutLocked}
-          onClick={onToggleLayoutEdit}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="7" rx="2" /><rect x="3" y="14" width="8" height="6" rx="1.5" /><rect x="13" y="14" width="8" height="6" rx="1.5" /></svg>
         </button>
         <button
           className={'titlebar-btn' + (gearTap ? ' spin-gear' : '')}

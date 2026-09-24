@@ -2,7 +2,7 @@
 
 /**
  * @typedef {Object} UsageRecord
- * @property {string} provider  - provider id ('deepseek'|'codex'|'kimi'|'dsh')
+ * @property {string} provider  - provider id ('deepseek'|'codex'|'kimi'|'dsh'|'claude'|'opencode')
  * @property {string} date      - 'YYYY-MM-DD'(本地时区)
  * @property {string} model     - 模型名
  * @property {number} inputTokens

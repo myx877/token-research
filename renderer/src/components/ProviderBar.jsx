@@ -7,14 +7,28 @@ import { getBarTheme } from '../lib/chartTheme.js';
 import { formatToken as formatWan } from '../lib/heatmap.js';
 import { addBeijingDays, beijingDateParts, beijingDayKey } from '../lib/beijing-calendar.js';
 import { barDensity, isCardMode, formatToken, windowClampedPosition } from './ChartWidget.jsx';
+import { orderProviders, providerColor, providerLabel } from '../lib/providers-meta.js';
 
 const DAYS = 31;
-// 堆叠顺序即 series 顺序:第一个在底部;颜色在品牌色基础上降纯度,柔和但不发灰
-const STACK = [
-  { id: 'codex', label: 'Codex', color: '#F2A05C' },
-  { id: 'kimi', label: 'Kimi', color: '#4ECB94' },
-  { id: 'deepseek', label: 'DeepSeek', color: '#6E94F5' }
-];
+// 无数据时的兜底序列(保持原视觉:底部 Codex → Kimi → DeepSeek 顶部)
+const FALLBACK_IDS = ['codex', 'kimi', 'deepseek'];
+
+// 堆叠序列由数据决定:只画窗口期内真有 token 的 provider,新增平台无需改代码。
+// PROVIDER_META 的顺序是「自上而下」,反转后即为堆叠顺序(数组末位在最上层,带圆角)。
+// onlyId 锁定单平台时只画它(单平台视图用;没数据就画空轴,不拿别的平台凑数)。
+function stackFor(details, onlyId) {
+  if (onlyId && onlyId !== 'all') {
+    return [{ id: onlyId, label: providerLabel(onlyId), color: providerColor(onlyId) }];
+  }
+  const byProvider = (details && details.byProvider) || {};
+  const ids = Object.keys(byProvider).filter((id) => {
+    const series = byProvider[id] || {};
+    return Object.keys(series).some((date) => Number(series[date]) > 0);
+  });
+  const ordered = orderProviders(ids);
+  const stackIds = ordered.length ? ordered.slice().reverse() : FALLBACK_IDS;
+  return stackIds.map((id) => ({ id: id, label: providerLabel(id), color: providerColor(id) }));
+}
 
 function lastDays(count) {
   const today = beijingDayKey();
@@ -25,14 +39,15 @@ function lastDays(count) {
   return days;
 }
 
-function buildOption(dom, details, dates) {
+function buildOption(dom, details, dates, onlyId) {
   const isDark = document.body.classList.contains('dark');
   const t = getBarTheme(isDark);
   const byProvider = (details && details.byProvider) || {};
   const cachedByProvider = (details && details.cachedByProvider) || {};
   const density = barDensity(t, dom, isCardMode(dom));
+  const stack = stackFor(details, onlyId);
   return {
-    color: STACK.map((p) => p.color),
+    color: stack.map((p) => p.color),
     backgroundColor: 'transparent',
     textStyle: { color: t.textColor, fontSize: 10 },
     grid: density.grid,
@@ -53,7 +68,7 @@ function buildOption(dom, details, dates) {
           return c > 0 ? '（缓存 ' + formatWan(c) + '）' : '';
         };
         // 显示顺序与堆叠视觉一致:自上而下 DeepSeek → Kimi → Codex
-        const parts = STACK.slice().reverse().map((provider) => {
+        const parts = stack.slice().reverse().map((provider) => {
           const p = lookup[provider.label];
           if (!p) return '';
           return '<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' + p.color + '"></span> ' + provider.label + ': ' + formatWan(p.value) + ' Token' + cachedSuffix(provider.id);
@@ -67,18 +82,18 @@ function buildOption(dom, details, dates) {
       axisLabel: Object.assign({ color: t.textColor, fontSize: 9, formatter: (v) => formatToken(v) }, density.yAxis.axisLabel)
     }),
     animation: true,
-    series: STACK.map((provider, i) => Object.assign({
+    series: stack.map((provider, i) => Object.assign({
       name: provider.label,
       type: 'bar',
       stack: 'total',
-      // 只有堆叠顶层(DeepSeek)带圆角
-      itemStyle: { borderRadius: i === STACK.length - 1 ? [3, 3, 0, 0] : [0, 0, 0, 0] },
+      // 只有堆叠顶层带圆角
+      itemStyle: { borderRadius: i === stack.length - 1 ? [3, 3, 0, 0] : [0, 0, 0, 0] },
       data: dates.map((date) => (byProvider[provider.id] && Number(byProvider[provider.id][date])) || 0)
     }, density.series && density.series[i]))
   };
 }
 
-export default function ProviderBar() {
+export default function ProviderBar({ provider = 'all' }) {
   const domRef = useRef(null);
   const [details, setDetails] = useState(null);
   const nowParts = beijingDateParts();
@@ -100,7 +115,7 @@ export default function ProviderBar() {
     });
   }, [year]);
 
-  useECharts(domRef, () => buildOption(domRef.current, details, dates), [details]);
+  useECharts(domRef, () => buildOption(domRef.current, details, dates, provider), [details, provider]);
 
   return <div className="chart-container" ref={domRef} />;
 }

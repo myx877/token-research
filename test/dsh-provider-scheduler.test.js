@@ -46,7 +46,7 @@ test('dsh adapter exposes the localLog contract', () => {
   assert.equal(dshProvider.authStatus({}), 'ok');
   assert.equal(typeof dshProvider.readLocalLog, 'function');
   const root = dshProvider.localLogRoot({ store: makeStore() });
-  assert.ok(path.isAbsolute(root) && root.endsWith(path.join('.dsh', 'telemetry')));
+  assert.ok(path.isAbsolute(root) && root.endsWith(path.join('.dsh', 'sessions')));
 });
 
 test('scheduler polls dsh localLog and the merged daily lands in the store', async () => {
@@ -56,7 +56,7 @@ test('scheduler polls dsh localLog and the merged daily lands in the store', asy
   fs.writeFileSync(path.join(root, 'usage-' + day + '.jsonl'),
     JSON.stringify({ v: 1, time: now, sessionId: 's1', model: 'deepseek-v4-pro', inputTokens: 100, outputTokens: 200, cacheReadTokens: 0, cacheWriteTokens: 0 }) + '\n');
 
-  const store = makeStore({ usageDaily: {}, providers: { dsh: { telemetryRoot: root } }, data: { historyDays: 30 } });
+  const store = makeStore({ usageDaily: {}, providers: { dsh: { telemetryRoot: root, sessionsRoot: path.join(root, 'no-sessions') } }, data: { historyDays: 30 } });
   const broadcasts = [];
   const scheduler = startScheduler({
     registry: makeRegistry([dshProvider]),
@@ -80,7 +80,7 @@ test('scheduler collects dsh localLog parse diagnostics and logs them', async (t
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dsh-sched-'));
   fs.writeFileSync(path.join(root, 'usage-2026-08-14.jsonl'), 'not json\n');
 
-  const store = makeStore({ usageDaily: {}, providers: { dsh: { telemetryRoot: root } }, data: { historyDays: 30 } });
+  const store = makeStore({ usageDaily: {}, providers: { dsh: { telemetryRoot: root, sessionsRoot: path.join(root, 'no-sessions') } }, data: { historyDays: 30 } });
   const warnings = [];
   const originalWarn = console.warn;
   console.warn = (...args) => { warnings.push(args.join(' ')); };
@@ -109,6 +109,7 @@ test('auto mode skips localLog while a matching root source is active', async ()
   const store = makeStore({
     usageDaily: {},
     'providers.dsh.telemetryRoot': root,
+    'providers.dsh.sessionsRoot': path.join(root, 'no-sessions'),
     'providers.dsh.collectionMode': 'auto',
     'ingest.dsh.sources': { src1: { rootId: deriveDshRootId(root, process.platform), lastIngestAt: Date.now() } },
     'ingest.dsh.pushLeaseMs': 600000,

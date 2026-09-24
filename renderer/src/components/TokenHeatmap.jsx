@@ -1,11 +1,21 @@
-// GitHub 风格 Token 活动热力图:每日(53×7)/每周·累计三模式共用同一网格。
+// Token 活动热力图:每日 / 每周 / 累计 三模式,共用同一张年内网格(列 = 一周,行 = 星期几)。
 // 每周/累计只是在每日网格基础上改变被上色的格子(列内从底向上按量填色)。
-// 颜色用主题 primary(#74B8FC)的 5 档透明度;hover tooltip 显示日期与用量。
+// 列口径统一 **周一开头**(与进度条「本周」同源);年份可前后切换。
+// 颜色用主题 primary(#74B8FC)的 5 档透明度;hover tooltip 显示日期、用量与当天金额。
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getHeatmap, onProvidersChanged } from '../api.js';
-import { buildSundayWeekTotals, buildWeeks, blockCount, colorLevel, formatToken, sundayWeekKey } from '../lib/heatmap.js';
+import {
+  buildWeekTotals,
+  buildWeeks,
+  blockCount,
+  colorLevel,
+  formatToken,
+  weekStartKey
+} from '../lib/heatmap.js';
 import { clampToWindow, resolveVerticalFlip } from '../lib/floating-layer.js';
+import { PROVIDER_META } from '../lib/providers-meta.js';
+import { formatCurrencyAmount } from '../fee-card-money.mjs';
 import {
   createLocalCalendarClock,
   findDayColumn,
@@ -16,11 +26,17 @@ import {
 const CELL = 12;
 const GAP = 2;
 const LEVEL_ALPHA = [0.06, 0.18, 0.38, 0.62, 0.9];
-const PROVIDER_OPTS = [
-  { id: 'all', label: '全部' },
-  { id: 'deepseek', label: 'DeepSeek' },
-  { id: 'codex', label: 'Codex' },
-  { id: 'kimi', label: 'Kimi' }
+// 年份可回溯的年数:再往前基本都是一片空,留着只会让人以为数据丢了
+const MAX_YEAR_BACK = 10;
+const HEAT_BLUE = 'rgba(116,184,252,';
+// 平台筛选页签由统一元数据生成:新增 provider 时这里自动跟随
+const PROVIDER_OPTS = [{ id: 'all', label: '全部' }].concat(
+  PROVIDER_META.map((meta) => ({ id: meta.id, label: meta.label }))
+);
+const MODE_TABS = [
+  { id: 'daily', label: '每日' },
+  { id: 'weekly', label: '每周' },
+  { id: 'cumulative', label: '累计' }
 ];
 
 function dateLabel(date) {
@@ -29,10 +45,14 @@ function dateLabel(date) {
   return month + '月' + day + '日';
 }
 
-export default function TokenHeatmap({ provider = 'all', year: requestedYear }) {
+export default function TokenHeatmap({ provider = 'all', year: requestedYear, lockProvider = false }) {
   const [clockDate, setClockDate] = useState(() => new Date());
-  const year = resolveHeatmapYear(requestedYear, clockDate);
+  const baseYear = resolveHeatmapYear(requestedYear, clockDate);
+  const [yearShift, setYearShift] = useState(0);
+  const year = baseYear + yearShift;
   const [selProvider, setSelProvider] = useState(provider);
+  // 单平台视图把 provider 锁死:外部选择变化时跟随,内部页签不再提供第二套真相
+  useEffect(() => { setSelProvider(provider); }, [provider]);
   const [mode, setMode] = useState('daily');
   const [data, setData] = useState({ days: {}, maxDaily: 0 });
   const [boxWidth, setBoxWidth] = useState(0);
@@ -101,8 +121,8 @@ export default function TokenHeatmap({ provider = 'all', year: requestedYear }) 
     return labels;
   }, [weeks, year]);
 
-  // 每周模式:按当前可视列的周日至周六区间求和
-  const weekTotals = useMemo(() => buildSundayWeekTotals(days), [days]);
+  // 每周模式:按当前可视列的周一至周日区间求和
+  const weekTotals = useMemo(() => buildWeekTotals(days), [days]);
   const maxWeek = Math.max(0, ...Object.values(weekTotals));
 
   // 累计模式:从年初逐日累加
@@ -144,7 +164,7 @@ export default function TokenHeatmap({ provider = 'all', year: requestedYear }) 
     return null;
   }
 
-  // 自定义悬停提示(原生 title 在透明窗口不显示;内容:日期 + 平台/模型明细)
+  // 自定义悬停提示(原生 title 在透明窗口不显示;内容:日期 + 平台/模型明细 + 当天金额)
   // 初始位置用估计半宽钳制,渲染后由 useLayoutEffect 按实测宽度二次校正(向窗口中间靠拢)
   const ESTIMATED_TIP_HALF = 104;
   const clampTipX = (x) => clampToWindow(x - ESTIMATED_TIP_HALF, 0, ESTIMATED_TIP_HALF * 2, 1).x + ESTIMATED_TIP_HALF;
@@ -202,6 +222,15 @@ export default function TokenHeatmap({ provider = 'all', year: requestedYear }) 
     }, HIDE_DELAY);
   };
 
+  // 切换模式/年份/平台时立刻收掉浮层。
+  // 为什么必须主动收:切走之后那些格子会被卸载,而 onMouseLeave **再也不会触发** ——
+  // 不主动收就会在屏幕上留一个"幽灵提示"贴在原地(视觉复核时抓到过)。
+  useEffect(() => {
+    pendingTip.current = null;
+    ['settle', 'hide', 'fade'].forEach(clearTimer);
+    setTip(null);
+  }, [mode, year, selProvider]);
+
   // 实测浮层宽度:内容(缓存明细)会把浮层撑到 260px+,估计值钳不紧,
   // 这里按 offsetWidth 把中心点夹回窗口内,与 echarts confine 行为一致
   useLayoutEffect(() => {
@@ -211,6 +240,17 @@ export default function TokenHeatmap({ provider = 'all', year: requestedYear }) 
     const x = clampToWindow(tip.x - half, 0, half * 2, 1).x + half;
     if (Math.abs(x - tip.x) > 0.5) el.style.left = x + 'px';
   }, [tip]);
+
+  // 当天金额后缀:数据来自 get:heatmap 的 details.costByProvider(跨币种绝不相加,故按平台取)
+  function amountSuffix(pid, date) {
+    const det = data.details || {};
+    const byCost = det.costByProvider || {};
+    const codes = det.currencyByProvider || {};
+    const amount = Number((byCost[pid] || {})[date]);
+    const currency = codes[pid];
+    if (!Number.isFinite(amount) || amount <= 0 || !currency) return '';
+    return ' · ' + formatCurrencyAmount(currency, amount.toFixed(2));
+  }
 
   function tipLines(date) {
     const det = data.details || {};
@@ -225,16 +265,16 @@ export default function TokenHeatmap({ provider = 'all', year: requestedYear }) 
     if (selProvider === 'all') {
       PROVIDER_OPTS.filter((p) => p.id !== 'all').forEach((p) => {
         const t = byProvider[p.id] && Number(byProvider[p.id][date]);
-        if (t > 0) lines.push({ label: p.label, value: formatToken(t) + ' Token' + cachedSuffix(p.id) });
+        if (t > 0) lines.push({ label: p.label, value: formatToken(t) + ' Token' + cachedSuffix(p.id) + amountSuffix(p.id, date) });
       });
     } else if (selProvider === 'deepseek') {
-      if (total > 0) lines.push({ label: 'DeepSeek 合计', value: formatToken(total) + ' Token' + cachedSuffix('deepseek') });
+      if (total > 0) lines.push({ label: 'DeepSeek 合计', value: formatToken(total) + ' Token' + cachedSuffix('deepseek') + amountSuffix('deepseek', date) });
       ((det.deepseekModels || {})[date] || []).forEach((m) => {
         if (m.tokens > 0) lines.push({ label: m.model, value: formatToken(m.tokens) + ' Token' });
       });
     } else {
       const p = PROVIDER_OPTS.find((o) => o.id === selProvider);
-      if (total > 0) lines.push({ label: p ? p.label : selProvider, value: formatToken(total) + ' Token' + cachedSuffix(selProvider) });
+      if (total > 0) lines.push({ label: p ? p.label : selProvider, value: formatToken(total) + ' Token' + cachedSuffix(selProvider) + amountSuffix(selProvider, date) });
     }
     return lines;
   }
@@ -251,13 +291,14 @@ export default function TokenHeatmap({ provider = 'all', year: requestedYear }) 
                 width: CELL,
                 height: CELL,
                 background: cell && cell.inYear
-                  ? 'rgba(116,184,252,' + LEVEL_ALPHA[level] + ')'
+                  ? HEAT_BLUE + LEVEL_ALPHA[level] + ')'
                   : 'rgba(0,0,0,0.04)'
               };
               return cell ? (
                 <div
                   key={r}
                   className="heatmap-cell"
+                  data-date={cell.date}
                   style={style}
                   onMouseEnter={(e) => showTip(e, cell.date)}
                   onMouseMove={moveTip} onMouseLeave={hideTip}
@@ -293,8 +334,8 @@ export default function TokenHeatmap({ provider = 'all', year: requestedYear }) 
                   background: !cell.inYear
                     ? 'rgba(0,0,0,0.04)'
                     : filled
-                      ? 'rgba(116,184,252,0.55)'
-                      : 'rgba(116,184,252,' + LEVEL_ALPHA[0] + ')'
+                      ? HEAT_BLUE + '0.55)'
+                      : HEAT_BLUE + LEVEL_ALPHA[0] + ')'
                 };
                 return (
                   <div
@@ -316,11 +357,11 @@ export default function TokenHeatmap({ provider = 'all', year: requestedYear }) 
   function renderWeekly() {
     return renderStacked(
       (c, col) => {
-        const weekKey = col[0] ? sundayWeekKey(col[0].date) : null;
+        const weekKey = col[0] ? weekStartKey(col[0].date) : null;
         return weekKey ? weekTotals[weekKey] || 0 : 0;
       },
       (c, col) => {
-        const weekKey = col[0] ? sundayWeekKey(col[0].date) : null;
+        const weekKey = col[0] ? weekStartKey(col[0].date) : null;
         return weekKey ? dateLabel(weekKey) + ' 当周使用了' : null;
       },
       maxWeek > 0 ? maxWeek / 7 : 0
@@ -358,7 +399,7 @@ export default function TokenHeatmap({ provider = 'all', year: requestedYear }) 
   // 浮层头部右侧的总量:每日=当日合计;每周=所在可视列合计;累计=年初至该日累计
   function tipTotal(date) {
     if (mode === 'weekly') {
-      const key = sundayWeekKey(date);
+      const key = weekStartKey(date);
       return key ? weekTotals[key] || 0 : 0;
     }
     if (mode === 'cumulative') return cumByDate[date] || 0;
@@ -369,6 +410,9 @@ export default function TokenHeatmap({ provider = 'all', year: requestedYear }) 
     <div className="heatmap-widget" ref={rootRef}>
       <div className="heatmap-head">
         <span className="heatmap-title">Token 活动</span>
+        {lockProvider ? (
+          <span className="heatmap-locked">仅看 {PROVIDER_OPTS.find((o) => o.id === selProvider)?.label || selProvider}</span>
+        ) : (
         <div className="heatmap-providers">
           {PROVIDER_OPTS.map((p) => (
             <button
@@ -380,11 +424,39 @@ export default function TokenHeatmap({ provider = 'all', year: requestedYear }) 
             </button>
           ))}
         </div>
+        )}
       </div>
       <div className="heatmap-modes">
-        {['daily', 'weekly', 'cumulative'].map((m) => (
-          <button key={m} className={'heatmap-tab' + (mode === m ? ' active' : '')} onClick={() => setMode(m)}>
-            {{ daily: '每日', weekly: '每周', cumulative: '累计' }[m]}
+        <span className="heatmap-year">
+          <button
+            type="button"
+            className="heatmap-year-btn"
+            title="上一年"
+            aria-label="上一年"
+            disabled={yearShift <= -MAX_YEAR_BACK}
+            onClick={() => setYearShift((v) => Math.max(-MAX_YEAR_BACK, v - 1))}
+          >
+            ‹
+          </button>
+          <span className="heatmap-year-label">{year}</span>
+          <button
+            type="button"
+            className="heatmap-year-btn"
+            title="下一年"
+            aria-label="下一年"
+            disabled={yearShift >= 0}
+            onClick={() => setYearShift((v) => Math.min(0, v + 1))}
+          >
+            ›
+          </button>
+        </span>
+        {MODE_TABS.map((m) => (
+          <button
+            key={m.id}
+            className={'heatmap-tab' + (mode === m.id ? ' active' : '')}
+            onClick={() => setMode(m.id)}
+          >
+            {m.label}
           </button>
         ))}
         {selProvider !== 'all' && selProvider !== 'deepseek' ? <span className="heatmap-local-only">仅本机</span> : null}
@@ -397,7 +469,7 @@ export default function TokenHeatmap({ provider = 'all', year: requestedYear }) 
       <div className="heatmap-legend">
         <span>少</span>
         {[0, 1, 2, 3, 4].map((l) => (
-          <span key={l} className="heatmap-legend-cell" style={{ background: 'rgba(116,184,252,' + LEVEL_ALPHA[l] + ')' }} />
+          <span key={l} className="heatmap-legend-cell" style={{ background: HEAT_BLUE + LEVEL_ALPHA[l] + ')' }} />
         ))}
         <span>多</span>
       </div>

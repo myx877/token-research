@@ -47,7 +47,7 @@ jobs:
           sudo apt-get install -y xvfb libgtk-3-0 libnss3 libxss1 libgbm1 libasound2t64
 
       - name: Run Electron visibility smoke test
-        run: xvfb-run -a ./node_modules/.bin/electron --no-sandbox scripts/ci/component-visibility-smoke.js
+        run: echo "组件可见性冒烟已删除:布局网格移除后 data-component-id 不再存在(见 VERIFICATION §20.3)"
 
       - name: Upload visibility screenshots
         if: always()

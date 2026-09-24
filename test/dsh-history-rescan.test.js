@@ -16,6 +16,7 @@ function makeStore(initial = {}) {
       if (key === 'localLogCursors.dsh') return data.localLogCursors_dsh;
       if (key === 'data.historyDays') return data.historyDays;
       if (key === 'providers.dsh.telemetryRoot') return data.root;
+      if (key === 'providers.dsh.sessionsRoot') return data.sessionsRoot;
       return undefined;
     },
     set(key, value) {
@@ -53,6 +54,7 @@ test('rescanLocalLogs clears and rebuilds dsh usageDaily AND usageDailyCost tran
     usageDailyCost: { 'dsh:2026-08-13': 0.004 },
     localLogCursors_dsh: { [dayPath]: staleCursor },
     root,
+    sessionsRoot: path.join(os.tmpdir(), 'no-such-dsh-sessions-' + Date.now()),
     historyDays: 30
   });
 
@@ -80,6 +82,7 @@ test('rescanLocalLogs restores usageDailyCost when the scan fails', async () => 
     usageDaily: { 'dsh:2026-08-13': { input: 1, cached: 0, output: 1, total: 2 } },
     usageDailyCost: { 'dsh:2026-08-13': 0.004 },
     root: path.join(os.tmpdir(), 'no-such-dsh-telemetry-dir-' + Date.now()),
+    sessionsRoot: path.join(os.tmpdir(), 'no-such-dsh-sessions-' + Date.now()),
     historyDays: 30
   });
   await assert.rejects(rescanLocalLogs({

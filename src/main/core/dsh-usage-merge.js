@@ -9,11 +9,16 @@ const DSH_PREFIX = 'dsh:';
 function emptyDailyRow() { return { input: 0, cached: 0, output: 0, total: 0 }; }
 
 function mergeDshKeys(localDaily, pushDaily) {
-  const merged = JSON.parse(JSON.stringify(localDaily && typeof localDaily === 'object' ? localDaily : {}));
-  Object.keys(pushDaily && typeof pushDaily === 'object' ? pushDaily : {}).forEach((key) => {
-    if (!key.startsWith(DSH_PREFIX)) return;
+  const base = localDaily && typeof localDaily === 'object' ? localDaily : {};
+  const pushRows = pushDaily && typeof pushDaily === 'object' ? pushDaily : {};
+  const pushKeys = Object.keys(pushRows).filter((key) => key.startsWith(DSH_PREFIX));
+  // 没有 push 数据(常态)时**直接返回原对象,不深拷贝**:整份 usageDaily 可能几十 MB,
+  // 而 get:heatmap 每次广播都被热力图与柱图各调一次(审查发现的主进程同步重活)。
+  if (!pushKeys.length) return base;
+  const merged = JSON.parse(JSON.stringify(base));
+  pushKeys.forEach((key) => {
     const prev = merged[key] || emptyDailyRow();
-    const add = pushDaily[key] || emptyDailyRow();
+    const add = pushRows[key] || emptyDailyRow();
     merged[key] = {
       input: (Number(prev.input) || 0) + (Number(add.input) || 0),
       cached: (Number(prev.cached) || 0) + (Number(add.cached) || 0),
@@ -25,10 +30,13 @@ function mergeDshKeys(localDaily, pushDaily) {
 }
 
 function mergeDshCosts(localCost, pushCost) {
-  const merged = JSON.parse(JSON.stringify(localCost && typeof localCost === 'object' ? localCost : {}));
-  Object.keys(pushCost && typeof pushCost === 'object' ? pushCost : {}).forEach((key) => {
-    if (!key.startsWith(DSH_PREFIX)) return;
-    merged[key] = Number(merged[key] || 0) + Number(pushCost[key] || 0);
+  const base = localCost && typeof localCost === 'object' ? localCost : {};
+  const pushRows = pushCost && typeof pushCost === 'object' ? pushCost : {};
+  const pushKeys = Object.keys(pushRows).filter((key) => key.startsWith(DSH_PREFIX));
+  if (!pushKeys.length) return base;
+  const merged = JSON.parse(JSON.stringify(base));
+  pushKeys.forEach((key) => {
+    merged[key] = Number(merged[key] || 0) + Number(pushRows[key] || 0);
   });
   return merged;
 }

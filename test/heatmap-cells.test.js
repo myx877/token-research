@@ -5,11 +5,11 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { spawnSync } = require('node:child_process');
 const {
-  buildSundayWeekTotals,
+  buildWeekTotals,
   buildWeeks,
   colorLevel,
   formatToken,
-  sundayWeekKey
+  weekStartKey
 } = require('../renderer/src/lib/heatmap.js');
 
 const root = path.resolve(__dirname, '..');
@@ -19,35 +19,43 @@ function localDate(day) {
   return new Date(day + 'T00:00:00');
 }
 
-test('buildWeeks(2026) starts at the Sunday of the week containing Jan 1 and fills 53 columns', () => {
+test('buildWeeks(2026) starts at the Monday of the week containing Jan 1 and fills 53 columns', () => {
   const weeks = buildWeeks(2026);
   assert.equal(weeks.length, 53);
-  // 2026-01-01 是周四 → 首格为 2025-12-28(周日,不属于本年)
-  assert.equal(weeks[0][0].date, '2025-12-28');
+  // 2026-01-01 是周四 → 首格为 2025-12-29(周一,不属于本年)
+  assert.equal(weeks[0][0].date, '2025-12-29');
   assert.equal(weeks[0][0].inYear, false);
-  assert.equal(weeks[0][4].date, '2026-01-01');
-  assert.equal(weeks[0][4].inYear, true);
+  assert.equal(weeks[0][3].date, '2026-01-01');
+  assert.equal(weeks[0][3].inYear, true);
   // 最后一列补足 7 天
   assert.ok(weeks[52].every((cell) => cell && cell.date));
+  // 每一列的第一行必须是周一(与进度条「本周」的 ISO 口径同源)
+  weeks.forEach((col, i) => {
+    const first = new Date(col[0].date + 'T00:00:00Z').getUTCDay();
+    assert.equal(first, 1, '第 ' + i + ' 列首日不是周一:' + col[0].date);
+  });
 });
 
-test('visual week keys use the Sunday that starts the rendered column', () => {
-  assert.equal(sundayWeekKey(localDate('2026-08-02')), '2026-08-02');
-  assert.equal(sundayWeekKey(localDate('2026-08-03')), '2026-08-02');
-  assert.equal(sundayWeekKey(localDate('2026-08-08')), '2026-08-02');
-  assert.equal(sundayWeekKey(localDate('2026-08-09')), '2026-08-09');
+test('visual week keys use the Monday that starts the rendered column', () => {
+  // 2026-08-02 是周日 → 它所在的可视列从 07-27(周一)开始
+  assert.equal(weekStartKey(localDate('2026-08-02')), '2026-07-27');
+  assert.equal(weekStartKey(localDate('2026-08-03')), '2026-08-03');
+  assert.equal(weekStartKey(localDate('2026-08-08')), '2026-08-03');
+  assert.equal(weekStartKey(localDate('2026-08-09')), '2026-08-03');
+  assert.equal(weekStartKey(localDate('2026-08-10')), '2026-08-10');
 });
 
 test('Sunday-only and Monday-only usage aggregate into their visual columns', () => {
-  const totals = buildSundayWeekTotals({
+  const totals = buildWeekTotals({
     '2026-08-02': 5,
     '2026-08-03': 7,
     '2026-08-09': 11
   });
 
+  // 08-02 是周日,归上一列;08-03(周一)与 08-09(周日)同属 08-03 那一列
   assert.deepEqual(totals, {
-    '2026-08-02': 12,
-    '2026-08-09': 11
+    '2026-07-27': 5,
+    '2026-08-03': 18
   });
 });
 
@@ -57,25 +65,26 @@ test('Beijing day keys remain visible when the host timezone skipped that local 
   ).href;
   const source = `
     const heatmap = await import(${JSON.stringify(moduleUrl)});
-    console.log(JSON.stringify(heatmap.buildSundayWeekTotals({ '2011-12-30': 5 })));
+    console.log(JSON.stringify(heatmap.buildWeekTotals({ '2011-12-30': 5 })));
   `;
   const result = spawnSync(process.execPath, ['--input-type=module', '--eval', source], {
     env: Object.assign({}, process.env, { TZ: 'Pacific/Apia' }),
     encoding: 'utf8'
   });
   assert.equal(result.status, 0, result.stderr || result.stdout);
-  assert.deepEqual(JSON.parse(result.stdout.trim()), { '2011-12-25': 5 });
+  // 2011-12-26 是那一周的周一(2011-12-25 是周日)
+  assert.deepEqual(JSON.parse(result.stdout.trim()), { '2011-12-26': 5 });
 });
 
-test('a cross-year column is keyed by its actual Sunday while summing selected-year days', () => {
+test('a cross-year column is keyed by its actual Monday while summing selected-year days', () => {
   const weeks = buildWeeks(2026);
-  const firstColumnKey = sundayWeekKey(localDate(weeks[0][0].date));
-  const totals = buildSundayWeekTotals({
+  const firstColumnKey = weekStartKey(localDate(weeks[0][0].date));
+  const totals = buildWeekTotals({
     '2026-01-01': 4,
     '2026-01-03': 6
   });
 
-  assert.equal(firstColumnKey, '2025-12-28');
+  assert.equal(firstColumnKey, '2025-12-29');
   assert.equal(totals[firstColumnKey], 10);
 });
 
@@ -89,9 +98,9 @@ test('every weekly total equals the sum of the seven daily cells in that rendere
     });
   });
 
-  const totals = buildSundayWeekTotals(days);
+  const totals = buildWeekTotals(days);
   weeks.forEach((column) => {
-    const key = sundayWeekKey(localDate(column[0].date));
+    const key = weekStartKey(localDate(column[0].date));
     const expected = column.reduce(
       (sum, cell) => sum + (cell.inYear ? Number(days[cell.date]) || 0 : 0),
       0
@@ -117,8 +126,9 @@ test('formatToken uses 亿 / 万 / thousands separators', () => {
 
 test('TokenHeatmap renders visual-week totals without ISO-week aggregation', () => {
   assert.match(heatmapJsx, /buildWeeks/);
-  assert.match(heatmapJsx, /buildSundayWeekTotals/);
-  assert.match(heatmapJsx, /sundayWeekKey/);
+  assert.match(heatmapJsx, /buildWeekTotals/);
+  assert.match(heatmapJsx, /weekStartKey/);
+  // 仍然不许用 ISO **周编号**做键:这里按"周一起始日的日期"分组,不是按 2026-W38
   assert.doesNotMatch(heatmapJsx, /isoWeekKey/);
   assert.match(heatmapJsx, /colorLevel/);
   assert.match(heatmapJsx, /formatToken/);

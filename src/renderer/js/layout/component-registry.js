@@ -253,6 +253,30 @@
         compact: { x: 0, y: 49, w: 12, h: 10, preset: 'full' },
         wide: { x: 0, y: 49, w: 12, h: 10, preset: 'full' }
       }
+    },
+    {
+      id: 'usage-summary',
+      label: '用量汇总',
+      settingsLabel: '用量汇总（日 / 自然周 / 自然月的 token 与金额）',
+      settingsKey: 'components.usageSummary',
+      // 交付目标就是"在悬浮窗可见",因此默认打开(而非像 token-speed 那样默认关闭需手动开)
+      defaultVisible: true,
+      presets: {
+        compact: [
+          { name: 'half', w: 6, h: 8 },
+          { name: 'full', w: 12, h: 8 },
+          { name: 'tall', w: 12, h: 12 }
+        ],
+        wide: [
+          { name: 'half', w: 6, h: 8 },
+          { name: 'full', w: 12, h: 8 },
+          { name: 'tall', w: 12, h: 12 }
+        ]
+      },
+      defaultPlacement: {
+        compact: { x: 0, y: 59, w: 12, h: 8, preset: 'full' },
+        wide: { x: 0, y: 59, w: 12, h: 8, preset: 'full' }
+      }
     }
   ];
   var runtime = Object.create(null);

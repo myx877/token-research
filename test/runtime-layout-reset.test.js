@@ -111,26 +111,17 @@ test('App remounts Dashboard through a generation key when the persisted layout 
   assert.match(source, /onReset:\s*\(\) => setDashboardGeneration\(\(generation\) => generation \+ 1\)/);
   assert.match(
     source,
-    /<Dashboard key=\{dashboardGeneration\} editing=\{effectiveEditing\} \/>/
+    /<Dashboard key=\{dashboardGeneration\} \/>/ // 布局编辑已移除:不再传 editing
   );
 });
 
-test('Dashboard fresh mount rebuilds both layouts and cleanup cannot write the old layout back', () => {
+test('Dashboard 只剩单平台详情与总览两条路径(布局网格已删)', () => {
   const source = fs.readFileSync(
     path.resolve(__dirname, '../renderer/src/components/Dashboard.jsx'),
     'utf8'
   );
 
-  assert.match(
-    source,
-    /layoutRef\.current = validateState\(normalizedSettings\.layout, normalizedSettings\);/
-  );
-  assert.match(
-    source,
-    /return \(\) => \{[\s\S]*?grid\.off\('change'\);[\s\S]*?grid\.destroy\(false\);/
-  );
-  assert.doesNotMatch(
-    source,
-    /return \(\) => \{[\s\S]*?send\('settings:update', \{ key: 'layout'/
-  );
+  assert.match(source, /import ProviderOverview/);
+  assert.match(source, /if \(!selected\) return <ProviderOverview \/>;/);
+  assert.doesNotMatch(source, /GridStack\.init|grid-stack-item/);
 });

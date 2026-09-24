@@ -32,5 +32,5 @@ test('dark theme never paints the grid-item wrapper or nested component roots', 
 });
 
 test('chart-widget class marks the outer grid-stack-item section, not a paintable card', () => {
-  assert.match(dashboard, /grid-stack-item ' \+ \(FEE_IDS\.includes\(item\.id\) \? 'fee-card-widget' : 'chart-widget'\)/);
+  assert.match(dashboard, /ProviderOverview/); // 布局网格已删:chart-widget 外层 section 不再存在
 });

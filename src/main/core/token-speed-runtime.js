@@ -133,6 +133,8 @@ function createTokenSpeedRuntime(options = {}) {
     poll('codex', 'localLog');
     poll('kimi', 'localLog');
     poll('dsh', 'localLog');
+    poll('claude', 'localLog');
+    poll('opencode', 'localLog');
     broadcastSnapshot();
   }
 
@@ -156,7 +158,9 @@ function createTokenSpeedRuntime(options = {}) {
       disable();
     } else if (!shouldEnable) {
       tracker.clear();
-      store.delete(STORAGE_KEY);
+      // conf 的 delete() 是无条件的整库写:键不存在时也会照样序列化 + 加密 + 落盘,
+      // 而迷你模式每次退出都会走到这里(审查发现)。存在才删。
+      if (typeof store.has !== 'function' || store.has(STORAGE_KEY)) store.delete(STORAGE_KEY);
     } else {
       broadcastSnapshot();
     }

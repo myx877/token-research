@@ -234,11 +234,14 @@ function startScheduler({
       notifyUsageUnavailable(provider, 'usage');
       return;
     }
-    const now = new Date();
+    /* 「现在是哪个月」必须与全项目日键同口径(**北京时间**):用本地时区时,UTC-8 的机器在
+       "北京已进入新月份"的头几小时会去抓上个月,该月数字缺一段(审查发现)。 */
+    const bjNow = (require('./beijing-calendar').beijingDateParts(Date.now())) || {};
+    const localNow = new Date();
     try {
       const usage = await provider.fetchUsage(ctxFor(provider), {
-        month: now.getMonth() + 1,
-        year: now.getFullYear()
+        month: bjNow.month || localNow.getMonth() + 1,
+        year: bjNow.year || localNow.getFullYear()
       });
       recordSuccess(provider, 'usage', 'usage', usage);
       notifyUsageObservation(provider, 'usage');
@@ -286,7 +289,9 @@ function startScheduler({
         : (provider.id === 'dsh'
             ? await provider.readLocalLog(ctx, { diagnostics })
             : await provider.readLocalLog(ctx));
-      const records = Array.isArray(batch) ? batch : batch.records;
+      // adapter 契约:返回 { records, cursors }。返回空/非对象时按"没有新记录"处理,
+      // 而不是在下一行抛 TypeError —— 那会被外层 catch 伪装成"平台请求失败"(审查发现)。
+      const records = Array.isArray(batch) ? batch : ((batch && batch.records) || []);
       const changed = Array.isArray(records) && records.length > 0;
       const recovered = recordChannelRecovery(provider, 'localLog', false);
       if (changed || recovered) touch(provider.id);

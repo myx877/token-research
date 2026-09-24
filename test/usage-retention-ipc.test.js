@@ -20,9 +20,11 @@ test('legacy settings:update delegates to the acknowledged settings writer', () 
 });
 
 test('heatmap reads the effective DSH usage snapshot without retention window', () => {
+  // 解构列表允许扩展(用量汇总额外引入 effectiveUsageDailyCost),
+  // 但 PUSH 键与 effectiveUsageDaily 必须仍来自 dsh-usage-merge。
   assert.match(
     ipcSource,
-    /const \{\s*PUSH_USAGE_KEY,\s*PUSH_COST_KEY,\s*effectiveUsageDaily\s*\} = require\('\.\/core\/dsh-usage-merge'\);/
+    /const \{\s*PUSH_USAGE_KEY,\s*PUSH_COST_KEY,\s*effectiveUsageDaily(?:,\s*\w+)*\s*\} = require\('\.\/core\/dsh-usage-merge'\);/
   );
   // 显示层不传 historyDays:已同步历史全量可见,清理交给 data.historyDays/prune;
   // dsh 由 effectiveUsageDaily 合并本地 usageDaily 与 push 聚合。

@@ -7,6 +7,10 @@ const { resetSettingsStore } = require('./core/settings-reset');
 const { saveSetting } = require('./core/settings-write');
 const { replaceDeepseekApiKey } = require('./core/api-key-replacement');
 const { retentionStartDay } = require('./core/usage-retention');
+// inclusiveBeijingDayCount:算「建议保留多少天」用(见 sync:history 的 retentionHint)。
+// 缺了这行 import,sync:history 在"存在早于保留窗口的数据"时会抛 ReferenceError ——
+// 而这正是那句提示唯一会出现的场景(真机点击「同步历史」时实测踩到)。
+const { inclusiveBeijingDayCount } = require('./core/beijing-calendar');
 const { getSessionSnapshot } = require('./core/session-state');
 const { skipDeepseekLogin } = require('./core/startup-windows');
 const { syncDeepSeekHistory, rescanLocalLogs } = require('./core/history-sync');
@@ -20,8 +24,10 @@ const { MINI_WIDTH, MINI_HEIGHT } = require('./core/mini-mode');
 const {
   PUSH_USAGE_KEY,
   PUSH_COST_KEY,
-  effectiveUsageDaily
+  effectiveUsageDaily,
+  effectiveUsageDailyCost
 } = require('./core/dsh-usage-merge');
+const { aggregateUsage, usageWindows, listProviders, isoWeekKey, CURRENCY } = require('./core/usage-buckets');
 
 function deepseekApiKeyCtx(deps, apiKey) {
   return {
@@ -90,7 +96,7 @@ module.exports = function setupIPC(deps) {
 
   /* ======== 登录 ======== */
 
-  ipcMain.on('login:submit', async (event, { apiKey }) => {
+  ipcMain.on('login:submit', async (event, { apiKey } = {}) => {
     const main = getMain();
     try {
       const deepseek = deps.registry.get('deepseek');
@@ -143,6 +149,7 @@ module.exports = function setupIPC(deps) {
     const usageDaily = effectiveUsageDaily(deps.store);
     const byProvider = {};
     const cachedByProvider = {};
+    const costByProvider = {};
     const deepseekModels = {};
     Object.keys(usageDaily).forEach((key) => {
       const idx = key.indexOf(':');
@@ -164,9 +171,121 @@ module.exports = function setupIPC(deps) {
         deepseekModels[date] = models.map((m) => ({ model: m.model, tokens: m.tokens }));
       }
     });
-    const result = buildHeatmap(byProvider, provider || 'all', year || new Date().getFullYear());
-    result.details = { byProvider: byProvider, cachedByProvider: cachedByProvider, deepseekModels: deepseekModels };
+    // 当天金额(悬停用):与 token 同源,按平台分开给 —— 跨币种绝不相加
+    const usageDailyCost = effectiveUsageDailyCost(deps.store);
+    Object.keys(usageDailyCost).forEach((key) => {
+      const idx = key.indexOf(':');
+      if (idx <= 0) return;
+      const pid = key.slice(0, idx);
+      const date = key.slice(idx + 1);
+      const cost = Number(usageDailyCost[key]) || 0;
+      if (cost <= 0) return;
+      costByProvider[pid] = costByProvider[pid] || {};
+      costByProvider[pid][date] = (costByProvider[pid][date] || 0) + cost;
+    });
+    // 年份口径 = **北京时间**(与全项目日键一致;本地时区在跨年那几小时会取到上一年)
+    const bjYear = (require('./core/beijing-calendar').beijingDateParts(Date.now()) || {}).year;
+    const result = buildHeatmap(byProvider, provider || 'all', year || bjYear || new Date().getFullYear());
+    result.details = {
+      byProvider: byProvider,
+      cachedByProvider: cachedByProvider,
+      costByProvider: costByProvider,
+      currencyByProvider: CURRENCY,
+      deepseekModels: deepseekModels
+    };
     return result;
+  });
+
+  /* ======== Usage Summary(日 / 自然周 / 自然月 × provider) ======== */
+
+  // 只读聚合:日键在读取时归入自然周(ISO 8601,周一起)/ 自然月,不新增持久化键、无需迁移。
+  // 金额与 token 同源:usageDaily + usageDailyCost(经 dsh push 有效聚合),跨币种不求和。
+  ipcMain.handle('get:usage-summary', (event, arg) => {
+    const { provider, bucket, from, to } = arg || {};
+    try {
+      const usageDaily = effectiveUsageDaily(deps.store);
+      const result = aggregateUsage(
+        usageDaily,
+        effectiveUsageDailyCost(deps.store),
+        {
+          bucket: bucket,
+          provider: provider,
+          from: from,
+          to: to,
+          monthlyFee: deps.store.get('data.subscriptionMonthlyFee') || {}
+        }
+      );
+      // 平台选择器用:出现在数据里的平台(降序按总量),渲染端不硬编码平台清单
+      // retention:本地保留窗口(设置 → 历史数据保留);周期起点早于它 = 该周期数字残缺,
+      // 渲染端据此挑明口径(如保留 7 天却看「本月」)。
+      const historyDays = Number(deps.store.get('data.historyDays'));
+      const retentionStart = Number.isInteger(historyDays) && historyDays > 0
+        ? retentionStartDay(historyDays)
+        : null;
+      // 最早有数据的日键 + 保留起点所在的 ISO 周:渲染层要用与主进程**同一套数据驱动判据**
+      // 决定要不要披露口径残缺(只比"周期起点 < 保留起点"会把补过历史的用户一直误报,
+      // 见 usage-buckets 里 truncated 的注释)。startWeek 放在主进程算,避免渲染层再写一份 ISO 周换算。
+      const earliestDay = Object.keys(usageDaily)
+        .map((key) => {
+          const idx = key.indexOf(':');
+          return idx > 0 ? key.slice(idx + 1) : null;
+        })
+        .filter((day) => /^\d{4}-\d{2}-\d{2}$/.test(day || ''))
+        .sort()[0] || null;
+      return Object.assign({
+        fetchedAt: Date.now(),
+        error: null,
+        providers: listProviders(usageDaily),
+        retention: retentionStart
+          ? {
+            historyDays: historyDays,
+            startDay: retentionStart,
+            startWeek: isoWeekKey(retentionStart),
+            earliestDay: earliestDay
+          }
+          : null
+      }, result);
+    } catch (e) {
+      // 读取失败(如 store 损坏)不能把渲染端一起带崩:返回空结果 + 错误文本。
+      return {
+        bucket: bucket || 'day',
+        rows: [],
+        totals: { input: 0, cached: 0, output: 0, total: 0, estimatedCost: 0, costByCurrency: {} },
+        providers: [],
+        fetchedAt: Date.now(),
+        error: e && e.message ? e.message : String(e)
+      };
+    }
+  });
+
+  // 单平台窗口卡:今日 / 本周 / 本月(北京时间结算口径,与采集侧日键一致)。
+  // 百分比 = 已用 / 用户配置的预算(金额预算优先,Token 预算兜底);
+  // 未设预算时 percent 返回 null —— 宁可没有百分比,也不编一个分母。
+  ipcMain.handle('get:usage-windows', (event, arg) => {
+    const provider = arg && typeof arg.provider === 'string' ? arg.provider : '';
+    try {
+      const result = usageWindows(
+        effectiveUsageDaily(deps.store),
+        effectiveUsageDailyCost(deps.store),
+        {
+          provider: provider,
+          budgets: deps.store.get('data.usageBudget') || {},
+          tokenBudgets: deps.store.get('data.usageBudgetTokens') || {},
+          monthlyFee: deps.store.get('data.subscriptionMonthlyFee') || {},
+          historyDays: deps.store.get('data.historyDays')
+        }
+      );
+      return Object.assign({ fetchedAt: Date.now(), error: null }, result);
+    } catch (e) {
+      return {
+        provider: provider,
+        currency: null,
+        retention: null,
+        windows: [],
+        fetchedAt: Date.now(),
+        error: e && e.message ? e.message : String(e)
+      };
+    }
   });
 
   /* ======== History Sync ======== */
@@ -220,41 +339,33 @@ module.exports = function setupIPC(deps) {
       summary.codex = { daysRebuilt: 0, earliestDate: null, skipped: true };
     }
 
-    const kimiProvider = deps.registry.get('kimi');
-    if (kimiProvider && typeof kimiProvider.readLocalLog === 'function') {
+    // Kimi / DSH / Claude Code / opencode 共用同一套事务性全量重扫;
+    // Codex 因走运行时影子重建而单独处理(见上)。rescanLocalLogs 会按
+    // 'localLogCursors.<providerId>' 约定同时清空 usageDaily / usageDailyCost 与游标。
+    for (const providerId of ['kimi', 'dsh', 'claude', 'opencode']) {
+      const provider = deps.registry.get(providerId);
+      if (!provider || typeof provider.readLocalLog !== 'function') {
+        summary[providerId] = { daysRebuilt: 0, earliestDate: null, skipped: true };
+        continue;
+      }
       // 手动同步前刷新一次系统扫描,新出现的 WSL 发行版也能纳入
-      if (typeof deps.refreshKimiAutoRoots === 'function') {
+      if (providerId === 'kimi' && typeof deps.refreshKimiAutoRoots === 'function') {
         await deps.refreshKimiAutoRoots();
       }
-      summary.kimi = await runLocalLogExclusive('kimi', () => rescanLocalLogs({
-        providerId: 'kimi',
-        readLocalLog: () => kimiProvider.readLocalLog({ store: deps.store }, { retainAll: true }),
-        readStore,
-        writeStore,
-        deleteStore,
+      summary[providerId] = await runLocalLogExclusive(providerId, () => rescanLocalLogs({
+        providerId: providerId,
+        readLocalLog: () => provider.readLocalLog({ store: deps.store }, { retainAll: true }),
+        readStore: readStore,
+        writeStore: writeStore,
+        deleteStore: deleteStore,
         onProgress: sendProgress
       }));
-    } else {
-      summary.kimi = { daysRebuilt: 0, earliestDate: null, skipped: true };
-    }
-
-    const dshProvider = deps.registry.get('dsh');
-    if (dshProvider && typeof dshProvider.readLocalLog === 'function') {
-      summary.dsh = await runLocalLogExclusive('dsh', () => rescanLocalLogs({
-        providerId: 'dsh',
-        readLocalLog: () => dshProvider.readLocalLog({ store: deps.store }, { retainAll: true }),
-        readStore,
-        writeStore,
-        deleteStore,
-        onProgress: sendProgress
-      }));
-    } else {
-      summary.dsh = { daysRebuilt: 0, earliestDate: null, skipped: true };
     }
 
     // 历史保留提示:最早日期落在保留窗口外时给出建议天数(只提示不擅改)
     const historyDays = deps.store.get('data.historyDays');
-    const earliest = [summary.deepseek, summary.codex, summary.kimi, summary.dsh]
+    const earliest = [summary.deepseek, summary.codex, summary.kimi, summary.dsh,
+      summary.claude, summary.opencode]
       .map((r) => r && r.earliestDate)
       .filter(Boolean)
       .sort()[0] || null;
@@ -313,7 +424,7 @@ module.exports = function setupIPC(deps) {
 
   /* ======== Settings ======== */
 
-  ipcMain.on('settings:update', (event, { key: rawKey, value }) => {
+  ipcMain.on('settings:update', (event, { key: rawKey, value } = {}) => {
     if (!isWritableSettingKey(rawKey)) {
       console.warn('[settings] rejected non-whitelisted settings:update key:', rawKey);
       return;
@@ -346,6 +457,17 @@ module.exports = function setupIPC(deps) {
 
   ipcMain.on('settings:reset', () => {
     resetSettingsStore(deps.store);
+    /* 重置会把 window.miniMode / window.edgeAutoHide 打回默认 false,但**物理窗口的状态不会跟着回去**:
+       窗口仍是 250×216 且 setResizable(false)、停靠状态机也还在跑。结果就是"设置说不是迷你模式、
+       窗口却是迷你尺寸" —— 点「迷你模式」会走 enter() 而不是 exit(),要按两次才出得来(审查发现)。
+       所以这里把运行时窗口状态一并收回去,让物理状态与设置一致。 */
+    if (deps.miniMode && typeof deps.miniMode.isActive === 'function' && deps.miniMode.isActive()) {
+      try { deps.miniMode.exit(); } catch (_) { /* 忽略:重置不该因为窗口操作失败而中断 */ }
+    }
+    const dock = deps.getEdgeDock && deps.getEdgeDock();
+    if (dock && typeof dock.getDockMeta === 'function' && dock.getDockMeta()) {
+      try { dock.disable(); } catch (_) { /* 同上 */ }
+    }
     if (deps.tokenSpeedRuntime && typeof deps.tokenSpeedRuntime.applySettings === 'function') {
       deps.tokenSpeedRuntime.applySettings();
     }
@@ -413,7 +535,7 @@ module.exports = function setupIPC(deps) {
     if (deps.miniMode) deps.miniMode.toggle();
   });
 
-  ipcMain.on('zoom:change', (event, { delta }) => {
+  ipcMain.on('zoom:change', (event, { delta } = {}) => {
     if (!getMain() || getMain().isDestroyed()) return;
     // 迷你模式锁定 zoom=1,禁止 Ctrl+滚轮缩放(窗口始终以最小尺寸展示)
     if (deps.miniMode && deps.miniMode.isActive()) return;
@@ -514,7 +636,7 @@ module.exports = function setupIPC(deps) {
     applyResizeBounds(win, state);
   }
 
-  ipcMain.on('resize:start', (event, { edge, screenX, screenY }) => {
+  ipcMain.on('resize:start', (event, { edge, screenX, screenY } = {}) => {
     var win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return;
     var bounds = win.getBounds();
@@ -528,7 +650,7 @@ module.exports = function setupIPC(deps) {
     });
   });
 
-  ipcMain.on('resize:move', (event, { screenX, screenY }) => {
+  ipcMain.on('resize:move', (event, { screenX, screenY } = {}) => {
     var win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return;
     var state = getResizeState(win);

@@ -13,10 +13,7 @@ test('token-speed tooltip appends to body and clamps position into the window', 
   assert.match(tooltip[0], /position: echartsWindowPosition\(/);
 });
 
-test('token speed card passes its chart dom for position clamping', () => {
-  const source = read('renderer/src/components/TokenSpeedCard.jsx');
-  assert.match(source, /dom: chartRef\.current/);
-});
+// token speed 卡与它的宿主(布局网格)已删除:本文件不再检查它传 chart dom 的行为
 
 test('ChartWidget re-exports the shared windowClampedPosition from floating-layer', () => {
   const source = read('renderer/src/components/ChartWidget.jsx');

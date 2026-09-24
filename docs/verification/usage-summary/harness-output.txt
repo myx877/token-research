@@ -1,0 +1,110 @@
+npm notice run deepseek-monitor@1.0.0 npx
+npm notice run electron scripts/verify-usage-summary-ui.js
+
+页面地址: http://127.0.0.1:56013/
+PASS  页面加载并渲染出用量汇总表格
+PASS  卡片标题为「用量汇总」  → 用量汇总
+PASS  桶页签为 日/周/月  → ["日","周","月"]
+PASS  默认桶为「日」  → 日
+PASS  列为各平台(顺序稳定且含新平台)  → ["日期","DeepSeek","Codex","opencode"]
+PASS  行为新→旧日期  → ["2026-09-17","2026-09-16","2026-09-15"]
+PASS  单元格 token 与金额分行显示  → ["2026-09-17","150.0万¥12.34","42.0万—","50.0万$1.87"]
+PASS  无金额平台显示 —(codex 无按次计费)  → 42.0万—
+PASS  合计分币种展示 ¥ 与 $(绝不相加)  → 534.0万 Token · ¥30.12 · $3.32
+PASS  估算列默认隐藏  → []
+PASS  无错误提示  → null
+GEOM  {"card":{"top":46,"bottom":279,"h":233},"surface":{"top":54,"bottom":271,"h":217},"table":{"top":116,"bottom":263,"h":147},"tbody":{"top":137,"bottom":242,"h":105},"tfoot":{"top":242,"bottom":263,"h":21},"totals":{"top":242,"bottom":263,"h":21},"scrollH":216,"clientH":215,"innerH":655}
+GEOM2 {"card":{"top":46,"bottom":286,"h":240},"surface":{"top":54,"bottom":278,"h":224},"table":{"top":116,"bottom":263,"h":147},"tbody":{"top":137,"bottom":242,"h":105},"tfoot":{"top":242,"bottom":263,"h":21},"totals":{"top":242,"bottom":263,"h":21},"scrollH":222,"clientH":222,"innerH":655}
+PROBE {"text":"534.0万 Token · ¥30.12 · $3.32","color":"rgb(26, 26, 46)","opacity":"1","visibility":"visible","display":"table-cell","overflow":"visible","rect":{"l":239,"t":242,"w":608,"h":21},"bodyCellColor":"rgb(107, 114, 128)","surfaceBg":"rgb(248, 249, 252)","surfaceOverflow":"hidden","point":{"x":543,"y":252},"topEl":"TD.usage-summary-total","topIsTotals":true}
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-day-light.png
+INKPROFILE 12:32! 16:81! 20:64! 24:7 68:24! 72:20! 88:22 92:38! 96:29! 100:26! 124:17 128:76! 144:36! 148:39! 152:13! 156:11 160:12 164:24! 180:37! 184:38! 188:17! 192:26! 196:21! 216:29! 220:28! 224:16! 228:20! 232:12 248:16! 252:60! 256:15! 640:50 644:46
+PASS  合计行确实被画出来(DOM 位置上有像素墨迹,不是只在 DOM 里)  → ink=91
+PASS  三行数据确实被画出来(tbody 位置有墨迹)  → ink=379
+PASS  卡片正下方没有溢出内容  → ink=0
+PASS  卡片的任何元素都没有溢出到卡片之外  → [] 卡片下方 y642 处的元素=SPAN.provider-health-text
+PASS  免凭证启动:渲染的是应用主界面,主窗里没有登录层  → {"登录层":0,"应用外壳":true,"汇总卡":true,"平台":"全部","表格":true,"自发通道":[]}
+PASS  免凭证启动:汇总卡照常挂载,默认「全部」跨平台表格直接可用  → {"卡":true,"表":true,"平台":"全部"}
+PASS  免凭证启动:没有自发任何登录通道(不会自动弹平台登录窗)  → []
+PASS  免凭证启动:选中未配 Key 的 DeepSeek,就地给内联输入(不弹窗、不跳转)  → picked=true input=true
+PASS  免凭证启动:本机口径今日/本周/本月三行照常(每行都有 Token 数)  → {"rows":3,"labels":["今日","本周","本月"],"figures":["96.0万 Token¥8.12","364.0万 Token¥30.12","580.0万 Token¥48.24"],"sent":[]}
+PASS  免凭证启动:走完"选平台 + 就地补 Key"仍无自发登录通道  → []
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-boot-nocred.png
+PASS  打开估算后出现估算列  → ["≈$3.22","≈$2.91"]
+PASS  估算值与真实金额区分(≈ 前缀)  → ["≈$3.22","≈$2.91"]
+PASS  合计行也带估算(按币种分开)  → 534.0万 Token · ¥30.12 · $3.32 · ≈$6.13
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-day-estimate.png
+PASS  切到周桶后按 ISO 周键展示  → ["2026-W38","2026-W37"]
+PASS  每次切换都带 from/to 重新取数  → ["day:2026-09-17..2026-09-23","day:2026-09-17..2026-09-23","day:2026-09-17..2026-09-23","week:2026-07-30..2026-09-23"]
+PASS  选择器含「全部」+ 全部 6 个平台  → ["全部","DeepSeek","Codex","Kimi","DSH","Claude Code","opencode"]
+PASS  平台选择器切到 opencode  → opencode
+PASS  单平台视图是 今日/本周/本月 三行  → ["今日","本周","本月"]
+PASS  单平台视图不再显示跨平台表格与桶页签  → table=false 桶页签=0
+PASS  已用百分比徽章按预算给出(25% / 30% / 170%)  → ["25%","30%","170%"]
+PASS  超预算那行标红,其余不标红  → [false,false,true]
+PASS  重置倒计时用相对时间且在合理量级(今日≈10.5h / 本周≈117h / 本月≈288h)  → ["10小时29分后重置","4天20小时后重置","11天23小时后重置"] → [10.483333333333333,116,287]
+PASS  每行都有 token 与金额  → ["130.0万 Token$1.00预算 $4.00","195.0万 Token$1.50预算 $5.00","208.0万 Token$1.70预算 $1.00"]
+PASS  预算数值一起显示(知道分母是多少)  → 130.0万 Token$1.00预算 $4.00
+PASS  进度条长度与百分比一致(25% 行 ≈ 0.25)  → 0.25
+PASS  超预算进度条封顶在 100%(不溢出容器)  → 1
+PASS  没设预算的平台才没有徽章(本平台三行都有)  → badges=3 bars=3
+PASS  切平台时按 provider 重新取窗口数据  → ["deepseek","opencode"]
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-window-opencode.png
+PASS  没设预算:不显示百分比徽章,也不画进度条  → badges=0 bars=0
+PASS  没设预算:给出「去设置里填预算」的提示  → 未设预算 → 只显示用量与金额;在「设置 → 预算」里填DeepSeek的每日/每周/每月预算即可显示百分比
+PASS  没设预算:用量与金额照常显示(币种为 ¥)  → ["96.0万 Token¥8.12","364.0万 Token¥30.12","580.0万 Token¥48.24"]
+PASS  三行的重置倒计时都在  → ["5小时59分后重置","4天20小时后重置","11天23小时后重置"]
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-window-nobudget.png
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-window-empty-platform.png
+UNIFORM [{"label":"DeepSeek","id":"deepseek","picked":true,"threeRows":true,"noTable":true,"resets":true,"figures":true},{"label":"Codex","id":"codex","picked":true,"threeRows":true,"noTable":true,"resets":true,"figures":true},{"label":"Kimi","id":"kimi","picked":true,"threeRows":true,"noTable":true,"resets":true,"figures":true},{"label":"DSH","id":"dsh","picked":true,"threeRows":true,"noTable":true,"resets":true,"figures":true},{"label":"Claude Code","id":"claude","picked":true,"threeRows":true,"noTable":true,"resets":true,"figures":true},{"label":"opencode","id":"opencode","picked":true,"threeRows":true,"noTable":true,"resets":true,"figures":true}]
+PASS  6 个平台逐个切过去都是同一套卡片(今日/本周/本月 + 倒计时 + token/金额)  → []
+PASS  没数据的平台也照样给三行(不是空白/不是空数组)  → []
+PASS  切回「全部」恢复跨平台表格  → tableBack=true
+PASS  未配 Key 的 DeepSeek:卡片内出现 API Key 内联输入区  → {"notice":"未配置 DeepSeek API Key:当前只统计本机日志;填入后可读官方余额与用量保存并验证","hasInput":true,"inputType":"password","btn":"保存并验证","rows":3,"rowLabels":["今日","本周","本月"],"selected":"DeepSeek"}
+PASS  未配 Key 的 DeepSeek:本机口径今日/本周/本月三行照旧在  → ["今日","本周","本月"]
+PASS  未配 Key 的 DeepSeek:文案明说缺什么(API Key)且交代影响范围  → 未配置 DeepSeek API Key:当前只统计本机日志;填入后可读官方余额与用量保存并验证
+PASS  未配 Key 的 DeepSeek:给的是「保存并验证」入口  → 保存并验证
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-cred-deepseek-nokey.png
+PASS  空输入:不发校验请求,就地给提示  → calls=0 err=请先填入 API Key
+PASS  明显非法输入:不发校验请求,提示格式问题  → calls=0 err=格式不像 DeepSeek API Key(形如 sk-...),未发送校验请求
+PASS  校验失败:通道确实被调用了一次(带键入值)  → calls=1
+PASS  校验失败:显示错误文案且仍停在"未配置"输入态  → {"hasInput":true,"draft":"sk-00000000000000000000000000000000","btn":"保存并验证","btnDisabled":false,"error":"API Key 校验失败:请确认复制完整、未过期(未保存)","rows":3}
+PASS  校验失败:apiKeySet 仍为 false(没有写入 store)  → false
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-cred-key-invalid.png
+PASS  校验成功:卡片改口(输入收起 → 转「登录平台」)且重拉设置刷新  → {"hasInput":false,"draft":null,"btn":"登录平台","btnDisabled":false,"error":null,"rows":3} refetched=1
+PASS  校验成功后输入框里的草稿被清空(不留明文)  → true
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-cred-key-saved.png
+PASS  有 Key 未登平台:输入框收起、按钮变「登录平台」  → {"notice":"已配置 API Key(可读余额);官方用量需要登录 DeepSeek 平台登录平台","hasInput":false,"inputType":null,"btn":"登录平台","rows":3,"rowLabels":["今日","本周","本月"],"selected":"DeepSeek"}
+PASS  有 Key 未登平台:文案区分「余额可读」与「官方用量需登录」  → 已配置 API Key(可读余额);官方用量需要登录 DeepSeek 平台登录平台
+PASS  点「登录平台」真的走 session:relogin 按需通道  → ["refresh:dashboard","session:relogin"]
+PASS  Key 与平台登录都齐:零凭证提示,三行照常  → {"notice":null,"hasInput":false,"inputType":null,"btn":null,"rows":3,"rowLabels":["今日","本周","本月"],"selected":"DeepSeek"}
+CRED-CLEAN [{"label":"opencode","picked":true,"notice":null,"rows":3},{"label":"DSH","picked":true,"notice":null,"rows":3},{"label":"Claude Code","picked":true,"notice":null,"rows":3}]
+PASS  无需凭证的平台(opencode / DSH / Claude Code):零凭证提示且三行照常  → [{"label":"opencode","picked":true,"notice":null,"rows":3},{"label":"DSH","picked":true,"notice":null,"rows":3},{"label":"Claude Code","picked":true,"notice":null,"rows":3}]
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-cred-codex-expired.png
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-cred-kimi-missing.png
+CRED-LOCAL [{"label":"Codex","picked":true,"btn":"立即重试","hasInput":false,"hintOk":true,"retried":true},{"label":"Kimi","picked":true,"btn":"立即重试","hasInput":false,"hintOk":true,"retried":true}]
+PASS  codex/kimi 缺本机凭证:给出缺失原因 + 「立即重试」入口(不是内联输 Key)  → [{"label":"Codex","picked":true,"btn":"立即重试","hasInput":false,"hintOk":true,"retried":true},{"label":"Kimi","picked":true,"btn":"立即重试","hasInput":false,"hintOk":true,"retried":true}]
+PASS  点「立即重试」真的走 refresh:dashboard  → [{"label":"Codex","picked":true,"btn":"立即重试","hasInput":false,"hintOk":true,"retried":true},{"label":"Kimi","picked":true,"btn":"立即重试","hasInput":false,"hintOk":true,"retried":true}]
+PASS  平台状态广播后凭证提示随之消失(订阅刷新,不是一次性快照)  → cleared=true
+PASS  暗色主题经 settings:loaded 生效  → dark/true
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-week-dark.png
+PASS  暗色主题下窗口卡照常渲染  → picked=true rows=3
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-window-dark.png
+PASS  浅色截图确实是浅底(亮像素占多数)  → 尺寸 884x655 均亮度 247.5 暗像素 0.1% 亮像素 99.2% 表格带墨迹 0.6% 表格带亮字 99.6% 平台色点 {"deepseek":1344,"codex":1183,"opencode":1065}
+PASS  浅色截图表格区域确有墨迹(非空白帧)  → 尺寸 884x655 均亮度 247.5 暗像素 0.1% 亮像素 99.2% 表格带墨迹 0.6% 表格带亮字 99.6% 平台色点 {"deepseek":1344,"codex":1183,"opencode":1065}
+PASS  三张截图的平台色点都真实渲染出来了  → 尺寸 884x655 均亮度 247.5 暗像素 0.1% 亮像素 99.2% 表格带墨迹 0.6% 表格带亮字 99.6% 平台色点 {"deepseek":1344,"codex":1183,"opencode":1065}
+PASS  深色截图确实是深底(暗像素占多数)  → 尺寸 884x655 均亮度 39.1 暗像素 99.0% 亮像素 0.1% 表格带墨迹 99.9% 表格带亮字 0.4% 平台色点 {"deepseek":585,"codex":560,"opencode":411}
+PASS  深色截图表格区域确有亮色文字(暗底白字)  → 尺寸 884x655 均亮度 39.1 暗像素 99.0% 亮像素 0.1% 表格带墨迹 99.9% 表格带亮字 0.4% 平台色点 {"deepseek":585,"codex":560,"opencode":411}
+PASS  估算开启帧与估算关闭帧不是同一张图  → 尺寸 884x655 均亮度 247.7 暗像素 0.2% 亮像素 99.2% 表格带墨迹 0.7% 表格带亮字 99.6% 平台色点 {"deepseek":1401,"codex":1241,"opencode":1137}
+PASS  窗口卡截图(有预算)确有墨迹,不是空白帧  → 尺寸 884x655 均亮度 246.0 暗像素 0.1% 亮像素 97.9% 表格带墨迹 2.8% 表格带亮字 97.4% 平台色点 {"deepseek":1012,"codex":917,"opencode":880}
+CARD-INK 卡片矩形={"x":31,"y":109,"width":816,"height":198} 绿像素=2768(单行最多 239) 红像素=5139(单行最多 798)
+PASS  绿色进度条与绿色徽章真的渲染出来了(卡片内成片绿像素)  → 绿=2768 单行最多=239
+PASS  超预算那行真的标红(卡片内成片红像素,不是文字彩边)  → 红=5139 单行最多=798
+CARD-INK 无预算卡片矩形={"x":31,"y":109,"width":816,"height":192} 绿像素=0(单行最多 0) 红像素=250(单行最多 17) —— 红像素已查证为字形边缘彩边,非红色图元
+PASS  没设预算那张:卡片内一个绿条/一个绿徽章都没有(不编百分比)  → 绿=0
+PASS  没设预算那张:也没有任何成片红色元素(无告警条)  → 红单行最多=17
+PASS  暗色窗口卡:深底且文字可见  → 尺寸 884x655 均亮度 40.0 暗像素 97.8% 亮像素 0.2% 表格带墨迹 99.8% 表格带亮字 0.5% 平台色点 {"deepseek":562,"codex":630,"opencode":506}
+CARD-INK 暗色卡片矩形={"x":31,"y":109,"width":816,"height":198} 绿像素=2928
+PASS  暗色窗口卡的绿条也画出来了  → 2928
+
+全部断言通过(0 个失败)
+截图目录: C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary

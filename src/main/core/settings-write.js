@@ -7,7 +7,9 @@ const {
   normalizeProviderFilter
 } = require('./token-speed-settings');
 
-const DEFAULT_HISTORY_DAYS = 7;
+// 非法值兜底用的正数天。与设置定义里的默认值一致(90 = 覆盖自然季/月初至今),
+// 旧的 7 天会让「本月」只剩近一周数据(实测可少报一个量级),已上调。
+const DEFAULT_HISTORY_DAYS = 90;
 
 function normalizeSettingValue(targetKey, value) {
   if (targetKey === 'providers.proxyUrl') {

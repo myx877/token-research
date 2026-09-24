@@ -454,6 +454,12 @@
         '</div>';
       case 'password':
         return '<input type="password" class="text-input" data-key="' + def.key + '" value="' + v + '"' + (placeholder ? ' placeholder="' + placeholder + '"' : '') + '>';
+      case 'number':
+        // 订阅月费一类的金额输入:沿用 input[data-key] 的 input 事件与 handleChange 默认分支,
+        // 存的是字符串,主进程侧一律 Number() 解析。
+        return '<input type="number" class="text-input" data-key="' + def.key + '" min="0" step="any" value="'
+          + escapeAttr(v === undefined || v === null ? '' : String(v)) + '"'
+          + (def.placeholder ? ' placeholder="' + escapeAttr(def.placeholder) + '"' : '') + '>';
       default:
         return '';
     }

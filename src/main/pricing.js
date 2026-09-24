@@ -69,11 +69,28 @@ function calcDshCost(model, inputTokens, outputTokens, cacheReadTokens, cacheWri
 }
 
 function getModelPrice(model) {
+  // 防御:model 缺失/非字符串时不抛(startsWith 在 undefined 上会崩)。
+  // 当前生产代码没有调用方(通用计价走的是 DSH 分时价 calcDshCost),但这是对外导出,
+  // 不该埋一个"传 null 就崩"的雷(审查发现)。
+  if (typeof model !== 'string' || !model) return PRICING['deepseek-v4-pro'];
   if (PRICING[model]) return PRICING[model];
   if (model.startsWith('deepseek-v4-pro')) return PRICING['deepseek-v4-pro'];
   if (model.startsWith('deepseek-v4-flash')) return PRICING['deepseek-v4-flash'];
   if (model.includes('reasoner')) return PRICING['deepseek-reasoner'];
   return PRICING['deepseek-v4-pro'];
+}
+
+// 已知才计价:未收录的模型返回 null,绝不回落到某个默认档位。
+// 用于第三方工具(Claude Code / opencode 等)的日志:这些日志可能记录任意厂商模型,
+// 若沿用 getModelPrice 的兜底会把未知模型按 deepseek-v4-pro 计价,凭空造出错误金额。
+function findModelPrice(model) {
+  const name = typeof model === 'string' ? model : '';
+  if (!name) return null;
+  if (PRICING[name]) return PRICING[name];
+  if (name.startsWith('deepseek-v4-pro')) return PRICING['deepseek-v4-pro'];
+  if (name.startsWith('deepseek-v4-flash')) return PRICING['deepseek-v4-flash'];
+  if (name.includes('reasoner')) return PRICING['deepseek-reasoner'];
+  return null;
 }
 
 function calcCost(model, promptTokens, completionTokens, cacheHitTokens) {
@@ -85,4 +102,12 @@ function calcCost(model, promptTokens, completionTokens, cacheHitTokens) {
   return cost;
 }
 
-module.exports = { PRICING, getModelPrice, calcCost, DSH_PRICING, getDshModelPrice, calcDshCost };
+module.exports = {
+  PRICING,
+  getModelPrice,
+  findModelPrice,
+  calcCost,
+  DSH_PRICING,
+  getDshModelPrice,
+  calcDshCost
+};

@@ -6,14 +6,16 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const registry = require('../src/main/providers/registry');
 
-test('main process registers all four provider adapters on startup', () => {
+test('main process registers all six provider adapters on startup', () => {
   const main = fs.readFileSync(path.join(root, 'src/main/index.js'), 'utf8');
   assert.match(main, /require\('\.\/providers\/deepseek'\)/);
   assert.match(main, /require\('\.\/providers\/codex'\)/);
   assert.match(main, /require\('\.\/providers\/kimi'\)/);
   assert.match(main, /require\('\.\/providers\/dsh'\)/);
+  assert.match(main, /require\('\.\/providers\/claude'\)/);
+  assert.match(main, /require\('\.\/providers\/opencode'\)/);
   const registrations = main.match(/registry\.register\(\w+Provider\)/g) || [];
-  assert.equal(registrations.length, 4);
+  assert.equal(registrations.length, 6);
 });
 
 test('registry registers, lists and gets adapters', () => {

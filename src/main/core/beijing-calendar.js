@@ -71,6 +71,16 @@ function millisecondsUntilNextBeijingMidnight(value = Date.now()) {
   return Math.max(1, nextMidnightMs - timestamp);
 }
 
+// 某个北京日的零点(epoch ms)。窗口重置时刻(次日 / 下周一 / 下月 1 日的 00:00)由它推导,
+// 与采集侧写日键的口径严格一致(固定 UTC+8,不吃系统时区与夏令时)。
+function beijingDayStartMs(dayKey) {
+  if (!isValidBeijingDayKey(dayKey)) return null;
+  const year = Number(dayKey.slice(0, 4));
+  const month = Number(dayKey.slice(5, 7));
+  const date = Number(dayKey.slice(8, 10));
+  return Date.UTC(year, month - 1, date) - BEIJING_OFFSET_MS;
+}
+
 // 兼容包装:既有调用点按原名导入,语义固定为北京时间。
 function localDayStr(tsMs) {
   return beijingDayKey(tsMs);
@@ -101,6 +111,7 @@ module.exports = {
   addBeijingDays,
   inclusiveBeijingDayCount,
   millisecondsUntilNextBeijingMidnight,
+  beijingDayStartMs,
   localDayStr,
   localTodayStr,
   localDateKey,

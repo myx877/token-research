@@ -49,9 +49,12 @@ async function syncDeepSeekHistory(options) {
   const writeStore = options.writeStore;
   const onProgress = options.onProgress || null;
   const sleep = options.sleep || defaultSleep;
+  // 月份口径同全项目(**北京时间**),理由见 scheduler.pollUsage 的同一处修复。
+  const { beijingDateParts } = require('./beijing-calendar');
   const current = options.now ? new Date(options.now) : new Date();
-  let year = current.getFullYear();
-  let month = current.getMonth() + 1;
+  const bjNow = beijingDateParts(options.now ? Number(options.now) : Date.now()) || {};
+  let year = bjNow.year || current.getFullYear();
+  let month = bjNow.month || current.getMonth() + 1;
 
   const usageDaily = readStore('usageDaily') || {};
   const syncedMonths = new Set(readStore(SYNCED_MONTHS_KEY) || []);
@@ -118,9 +121,9 @@ async function syncDeepSeekHistory(options) {
           emptyStreak = 0;
           days.forEach((d) => {
             usageDaily['deepseek:' + d.date] = {
-              input: 0,
+              input: Math.round(Number(d.cacheMiss) || 0),
               cached: Math.round(Number(d.cacheHit) || 0),
-              output: 0,
+              output: Math.round(Number(d.completion) || 0),
               total: Math.round(Number(d.total) || 0),
               models: (d.models || []).map((m) => ({ model: m.model, tokens: m.tokens }))
             };

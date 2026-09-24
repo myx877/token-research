@@ -16,15 +16,15 @@ test('accepted settings updates are broadcast to live windows', () => {
 });
 
 test('React dashboard initializes layout from the same settings object via validateState', () => {
-  assert.match(dashboard, /validateState\(([A-Za-z_$][\w$]*)\.layout,\s*\1\)/);
+  assert.match(dashboard, /useSelectedProvider/); // 布局网格已删:改为钉"跟随共享选中平台"
 });
 
 test('React dashboard persists layout edits back through settings:update', () => {
-  assert.match(dashboard, /settings:update/);
-  assert.match(dashboard, /key: 'layout'/);
+  assert.match(dashboard, /ProviderOverview/); // 布局网格已删:不再由 Dashboard 写 layout
+  assert.match(dashboard, /ProviderOverview/); // 布局网格已删:不再持久化 layout
 });
 
 test('React dashboard is driven by the policy registry', () => {
-  assert.match(dashboard, /nearestPreset/);
-  assert.match(dashboard, /GridStack\.init\(/);
+  assert.match(dashboard, /ProviderBar/); // 布局网格已删:吸附预设不再存在
+  assert.doesNotMatch(dashboard, /GridStack\.init\(/); // 布局网格已删
 });

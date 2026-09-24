@@ -8,6 +8,9 @@ const RESET_KEEP_KEYS = Object.freeze([
   // retaining the aggregate without them replays or deletes historical usage.
   'localLogCursors.codex',
   'localLogCursors.kimi',
+  // Claude Code / opencode 同为本地只读来源:汇总与游标必须一起保留,否则重放或丢历史。
+  'localLogCursors.claude',
+  'localLogCursors.opencode',
   // DSH 遥测:汇总、费用与游标是同一份持久单元,必须与 usageDaily 一起保留。
   'usageDailyCost',
   'localLogCursors.dsh',

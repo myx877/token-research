@@ -5,6 +5,7 @@ import * as echarts from 'echarts';
 import useECharts from '../hooks/useECharts.js';
 import { getTheme, getBarTheme } from '../lib/chartTheme.js';
 import { curvePointLabels } from '../lib/curve-merge.js';
+import { beijingDayKey } from '../lib/beijing-calendar.js';
 import { echartsWindowPosition as windowClampedPosition } from '../lib/floating-layer.js';
 
 function clamp(value, minimum, maximum) {
@@ -175,9 +176,11 @@ function buildDailyOption(dom, dailyData) {
   const hitData = [];
   const missData = [];
   const completionData = [];
-  // 平台按月返回零填充数据:截掉今天之后的空白天,避免图表尾部大片空白
-  const now = new Date();
-  const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+  // 平台按月返回零填充数据:截掉今天之后的空白天,避免图表尾部大片空白。
+  // **必须用北京日键**:dailyData 的日期就是按北京日写入的(全项目统一口径),
+  // 拿系统本地"今天"比,在落后于北京的时区(UTC-8 等)会把北京今天那一行当成"未来"丢掉 ——
+  // 表现为当地下午那段时间柱状图少一根(审查发现的真 bug)。
+  const todayStr = beijingDayKey();
   (dailyData || []).forEach((d) => {
     if (d.date > todayStr) return;
     dates.push(d.date.slice(5));

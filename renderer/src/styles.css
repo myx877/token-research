@@ -17,27 +17,10 @@ body,
   user-select: none;
 }
 
-/* 缩放手柄层, 与旧版 class 完全一致(行为由 Task 8 的 ResizeHandles 恢复) */
-.resize-layer {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-}
-
-.resize-handle {
-  position: absolute;
-  pointer-events: auto;
-}
-
-.resize-n { top: 0; left: 8px; right: 8px; height: 6px; cursor: n-resize; }
-.resize-s { bottom: 0; left: 8px; right: 8px; height: 6px; cursor: s-resize; }
-.resize-e { right: 0; top: 8px; bottom: 8px; width: 6px; cursor: e-resize; }
-.resize-w { left: 0; top: 8px; bottom: 8px; width: 6px; cursor: w-resize; }
-.resize-ne { top: 0; right: 0; width: 12px; height: 12px; cursor: ne-resize; }
-.resize-nw { top: 0; left: 0; width: 12px; height: 12px; cursor: nw-resize; }
-.resize-se { bottom: 0; right: 0; width: 12px; height: 12px; cursor: se-resize; }
-.resize-sw { bottom: 0; left: 0; width: 12px; height: 12px; cursor: sw-resize; }
+/* 应用层缩放句柄(.resize-layer / .resize-handle × 8)已删除:
+   主窗现在走系统原生缩放(resizable: true),没有任何组件渲染它们。
+   设置窗仍用自己的那份(src/renderer/css/main.css),不受影响。
+   守卫见 test/renderer-static.test.js「主窗走系统原生缩放」。 */
 
 #app {
   width: 100%;
@@ -65,6 +48,8 @@ body,
   display: flex;
   align-items: center;
   gap: 6px;
+  /* 标签栏要在窄窗里能被压缩(@container 降级靠的是它真的量得到 width) */
+  min-width: 0;
 }
 
 .titlebar-logo {
@@ -76,6 +61,71 @@ body,
 .titlebar-text {
   font-size: 12px;
   font-weight: 600;
+  /* 窄窗(420px)里标题栏元素变多后会被挤成"Token / Monitor"两行,观感像坏掉 */
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 退回上一级(仅在详情页出现)。标题栏刻意**不放**服务商切换控件:
+   34px 高的条里塞一排标签,在默认 420px 窗口里必然退化成认不出的色点;
+   而切换入口(卡片里的「展示平台 ▾」)本来就在下面,放两处只是重复。
+   按钮要 no-drag:它在标题栏的拖拽区里,必须可点。 */
+.titlebar-back {
+  flex: none;
+  margin-left: 8px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+.titlebar-back:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+:root[data-theme$='dark'] .titlebar-back {
+  border-color: var(--border-dark);
+}
+
+/* 单平台视图:纵向信息流,只放所选平台相关的卡,DS 专属卡不出现 */
+.single-provider {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/* 单平台视图的根节点同时是 .content(overflow:auto 的滚动容器)和 .single-provider(flex 列)。
+   flex 列的子项默认 flex-shrink:1 —— 于是它们会被"压扁"去适配容器高度,**而不是撑出滚动条**;
+   被压扁之后卡片的 .component-surface{overflow:hidden} 就把内容直接裁掉
+   (实测:本月那一行的进度条与数字整个消失,而外层因为"没有溢出"连滚动条都不出现)。
+   规则:这些卡片必须按内容撑满,溢出交给外层滚动 —— 这才是"看不到全部内容"的根因。 */
+.content.single-provider > * {
+  flex: 0 0 auto;
+}
+.single-provider-fees {
+  display: flex;
+  gap: 8px;
+}
+.single-provider-fees > * {
+  flex: 1;
+  min-width: 0;
+}
+.single-provider .chart-container {
+  height: 240px;
+}
+
+/* 热力图被全局选择锁定时:页签收起,只留一句"仅看谁" */
+.heatmap-locked {
+  font-size: 10px;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1px 8px;
 }
 
 .content {
@@ -124,6 +174,8 @@ body,
 .titlebar-actions {
   display: flex;
   gap: 4px;
+  /* 按钮组永远不参与压缩:标签栏可以变窄,操作按钮不能被挤扁 */
+  flex: none;
   -webkit-app-region: no-drag;
 }
 
@@ -633,11 +685,6 @@ body,
   color: var(--text-primary);
 }
 
-.quota-card-plan-sub {
-  font-size: 10px;
-  color: var(--text-secondary);
-}
-
 /* 套餐徽标:仿 Codex 原版 Pro 小胶囊 */
 .quota-card-plan-badge {
   font-size: 10px;
@@ -885,6 +932,75 @@ body,
   border-radius: 2px;
 }
 
+/* ======== 热力图的年份切换 / 每月视角 ======== */
+
+/* 页签行现在有:年份切换 + 4 个模式 + 仅本机 + 总量。窄窗(默认 420px)放不下就折行,
+   不压缩、不裁字 —— 挤成一行会让"每月"和"累计"看起来是同一个东西。 */
+.heatmap-modes {
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 4px;
+}
+
+.heatmap-year {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: 4px;
+  padding-right: 6px;
+  border-right: 1px solid var(--border);
+}
+
+.heatmap-year-btn {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.heatmap-year-btn:hover:not(:disabled) {
+  background: rgba(116, 184, 252, 0.16);
+  color: var(--primary-dark);
+}
+
+.heatmap-year-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.heatmap-year-label {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+/* 主数字是 token 数(token 预算当分母)时,徽章比百分比宽,给它一点呼吸 */
+.usage-window-badge.tokens,
+.mini-usage-badge.tokens {
+  font-variant-numeric: tabular-nums;
+}
+
+/* token 分母时退居次要位置的百分比 */
+.usage-window-percent-sub {
+  margin-left: 4px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.mini-usage-percent-sub {
+  margin-left: 4px;
+  font-size: 9px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 /* 自定义悬停提示:原生 title 在透明窗口不显示 */
 .heatmap-tooltip {
   position: fixed;
@@ -953,12 +1069,14 @@ body,
 /* ======== 迷你模式 ======== */
 
 /* 内容区切换(迷你 <-> 完整)淡入,遮住窗口缩放与重排之间的一帧闪烁 */
+/* 内容切换的淡入:窗口缓动结束**之后**才换内容(见 core/mini-mode.js 的 notifyRenderer),
+   所以这里的淡入不再需要"盖住整段缩放",短一点更利落(220ms 会显得换完内容还在慢慢显影)。 */
 .app-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  animation: app-content-in 180ms ease-out;
+  animation: app-content-in 140ms ease-out;
 }
 
 @keyframes app-content-in {
@@ -970,6 +1088,9 @@ body,
   flex: 1;
   display: flex;
   flex-direction: column;
+  /* 允许被压缩:内容比窗口高时交给 .mini-usage 滚动,
+     而不是撑破 250×216 的窗口被 #app{overflow:hidden} 直接切掉(实测:第三条看不到) */
+  min-height: 0;
   user-select: none;
 }
 
@@ -1164,4 +1285,963 @@ body,
   bottom: 0;
   right: auto;
   transition: width 0.4s ease-out;
+}
+
+/* ======== 用量汇总卡(日 / 自然周 / 自然月 × provider) ======== */
+.usage-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--text-primary);
+}
+
+.usage-summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.usage-summary-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.usage-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.usage-summary-table th,
+.usage-summary-table td {
+  padding: 3px 5px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+:root[data-theme$='dark'] .usage-summary-table th,
+:root[data-theme$='dark'] .usage-summary-table td {
+  border-bottom-color: var(--border-dark);
+}
+
+.usage-summary-table th {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.usage-summary-table th:first-child,
+.usage-summary-table td.usage-summary-period {
+  text-align: left;
+  color: var(--text-secondary);
+}
+
+.usage-summary-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.usage-summary-tokens {
+  display: block;
+  font-weight: 600;
+}
+
+.usage-summary-money,
+.usage-summary-est {
+  display: block;
+  color: var(--text-secondary);
+}
+
+.usage-summary-est {
+  font-style: italic;
+  opacity: 0.78;
+}
+
+.usage-summary-empty-cell {
+  color: var(--text-secondary);
+  opacity: 0.45;
+}
+
+.usage-summary-total {
+  text-align: right;
+  font-weight: 600;
+}
+
+.usage-summary-empty,
+.usage-summary-error {
+  padding: 8px 0;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.usage-summary-error {
+  color: var(--error);
+}
+
+/* ===== 单平台窗口卡(今日 / 本周 / 本月)=====
+   视觉对齐用户给的配额卡:一行一块圆角区,行内 = 标签 + 绿色百分比徽章 + 右侧重置倒计时,
+   下面灰轨 + 绿条,再下面一行 token 与金额。 */
+.usage-window-list {
+  display: flex;
+  flex-direction: column;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.usage-window {
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  background: var(--bg-card);
+}
+
+.usage-window + .usage-window {
+  margin-top: 6px;
+}
+
+:root[data-theme$='dark'] .usage-window {
+  border-color: var(--border-dark);
+  background: var(--bg-card-dark);
+}
+
+.usage-window-head {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.usage-window-label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* 绿色药丸徽章:已用百分比 */
+.usage-window-badge {
+  margin-left: 6px;
+  padding: 0 5px;
+  border: 1px solid var(--success);
+  border-radius: 8px;
+  color: var(--success);
+  background: rgba(34, 197, 94, 0.1);
+  line-height: 14px;
+}
+
+.usage-window-badge.over {
+  border-color: var(--error);
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.usage-window-reset {
+  margin-left: auto;
+  color: var(--text-secondary);
+}
+
+.usage-window-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(116, 184, 252, 0.16);
+  overflow: hidden;
+}
+
+.usage-window-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--success);
+  transition: width 300ms ease-out;
+}
+
+.usage-window-fill.over {
+  background: var(--error);
+}
+
+.usage-window-figures {
+  display: flex;
+  align-items: baseline;
+  margin-top: 5px;
+  color: var(--text-secondary);
+}
+
+.usage-window-tokens {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.usage-window-cost {
+  /* 金额钉在这一行的最右端(= 进度条的右下角)。margin-left:auto 让它永远贴右,
+     不依赖"前一个元素把它顶开"——没有预算徽章时也要在同一个位置。 */
+  margin-left: auto;
+  padding-left: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 估算金额(codex/kimi 无真实账单,用订阅费摊薄):≈ 前缀由 lib/window-cost.mjs 加,
+   这里再压一点透明度,让"这不是平台账单"在视觉上也成立。 */
+.usage-window-cost.estimated {
+  opacity: 0.85;
+}
+
+/* 口径残缺的行内角标:受影响的那一行自己挂,不再单开横幅。
+   琥珀色沿用"需要你知道"的语义(与 .usage-window-hint.retention 同族),但只占几个字。 */
+.usage-window-partial {
+  margin-left: 6px;
+  padding: 0 4px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.14);
+  color: var(--warning);
+  font-size: 9px;
+  line-height: 14px;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.usage-window-budget {
+  margin-left: 8px;
+  opacity: 0.8;
+}
+
+.usage-window-hint {
+  padding: 6px 8px;
+  margin-bottom: 6px;
+  border-radius: var(--radius-btn);
+  background: rgba(116, 184, 252, 0.1);
+  color: var(--text-secondary);
+  line-height: 15px;
+}
+
+/* 口径披露:本地保留窗口短于展示周期(如保留 7 天却看「本月」)。
+   用的是"需要你知道"而非"出错了"的警示色,和预算提示同位置、不同语气。 */
+.usage-window-hint.retention {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--warning);
+  border-left: 2px solid var(--warning);
+  border-radius: 0 var(--radius-btn) var(--radius-btn) 0;
+}
+
+/* 卡片内凭证态:选中平台缺什么就就地补什么(不再用全局登录墙挡住整个界面) */
+.usage-cred {
+  margin-top: 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  background: rgba(116, 184, 252, 0.08);
+  color: var(--text-secondary);
+  line-height: 15px;
+}
+
+:root[data-theme$='dark'] .usage-cred {
+  border-color: var(--border-dark);
+}
+
+.usage-cred-text {
+  margin-bottom: 6px;
+}
+
+.usage-cred-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.usage-cred-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  background: var(--bg-window);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+:root[data-theme$='dark'] .usage-cred-input {
+  border-color: var(--border-dark);
+  background: var(--bg-window-dark);
+}
+
+.usage-cred-btn {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+:root[data-theme$='dark'] .usage-cred-btn {
+  border-color: var(--border-dark);
+  background: var(--bg-card-dark);
+}
+
+.usage-cred-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.usage-cred-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* 校验失败的错误文案:明确"未保存",避免用户以为已经换掉了旧 Key */
+.usage-cred-error {
+  margin-top: 5px;
+  color: var(--error);
+}
+
+.usage-summary-single-title {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ======== 百分比来源标注 + 命中/输入/输出 明细 ======== */
+
+/* 徽章里的分母来源:额度 / 预算。字号更小、同色系,保证"百分比是怎么来的"一眼可见,
+   又不至于把徽章撑得很宽。 */
+.usage-window-basis {
+  margin-left: 3px;
+  font-size: 9px;
+  opacity: 0.75;
+}
+
+/* 每个进度条下方的三桶明细:命中(cache hit)/ 输入 / 输出。
+   默认不可见、鼠标停在条上才浮现(用户要求"放上去能看到");槽位常驻占高,
+   只切透明度,所以悬停不会引起布局跳动 —— 与 .mini-usage-detail 同一套做法。 */
+.usage-window-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+
+.usage-window:hover .usage-window-breakdown {
+  opacity: 1;
+}
+
+/* 命中/输入/输出 三桶同色:这个卡里绿色专指"已用比例"。
+   单独给"命中"上绿既破坏这条约定,也会让"没设预算 ⇒ 一个绿像素都没有"的像素级证明失效。 */
+
+/* ======== 首屏:选服务商(免登录入口) ======== */
+
+.provider-gate {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 10px 12px 8px;
+  overflow-y: auto;
+}
+
+.provider-gate-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.provider-gate-sub {
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.provider-gate-list {
+  margin-top: 6px;
+}
+
+/* 分组:用户可见的两大类(模型平台 / 本机日志 harness)。
+   标题小而克制,只做分节提示,不跟平台行抢注意力。 */
+.provider-gate-section {
+  margin-top: 10px;
+}
+
+.provider-gate-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--text-secondary);
+  opacity: 0.85;
+}
+
+/* 「全部平台」不是第 7 个平台,是跨平台总览的入口:虚线边框把它和平台行分开,
+   否则它看起来像"某个叫全部的供应商" */
+.provider-gate-all {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-top: 10px;
+  padding: 7px 9px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-btn);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.provider-gate-all:hover,
+.provider-gate-all.active {
+  border-color: var(--primary);
+}
+
+.provider-gate-all.active {
+  background: rgba(116, 184, 252, 0.12);
+}
+
+:root[data-theme$='dark'] .provider-gate-all {
+  border-color: var(--border-dark);
+}
+
+.provider-gate-all-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+/* ===== 「全部」总览:所有平台一屏对比 ===== */
+.provider-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.overview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.overview-title {
+  font-size: 12px;
+  font-weight: 600;
+}
+.overview-summary {
+  display: flex;
+  gap: 8px;
+  padding: 10px 11px;
+}
+.overview-cell {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.overview-cell-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.overview-cell-total {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.overview-unit {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+.overview-cell-cost {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.overview-share-bar {
+  display: flex;
+  height: 10px;
+  margin: 8px 0 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--border);
+}
+.overview-share-seg {
+  height: 100%;
+}
+.overview-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.overview-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.overview-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.overview-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.overview-share,
+.overview-tokens,
+.overview-cost {
+  font-variant-numeric: tabular-nums;
+}
+.overview-share {
+  color: var(--text-secondary);
+}
+.overview-tokens {
+  min-width: 74px;
+  text-align: right;
+}
+.overview-cost {
+  min-width: 62px;
+  text-align: right;
+  color: var(--text-secondary);
+}
+.overview-empty {
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.overview-note {
+  margin-top: 9px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.provider-gate-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 7px 9px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  background: var(--bg-card);
+  text-align: left;
+  cursor: pointer;
+}
+
+.provider-gate-item:hover {
+  border-color: var(--primary);
+}
+
+.provider-gate-item.active {
+  border-color: var(--primary);
+  background: rgba(116, 184, 252, 0.12);
+}
+
+:root[data-theme$='dark'] .provider-gate-item {
+  border-color: var(--border-dark);
+  background: var(--bg-card-dark);
+}
+
+.provider-gate-dot {
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.provider-gate-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.provider-gate-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.provider-gate-status {
+  font-size: 10px;
+  color: var(--text-secondary);
+  line-height: 14px;
+}
+
+.provider-gate-status.warn {
+  color: var(--warning);
+}
+
+.provider-gate-status.ok {
+  color: var(--text-secondary);
+}
+
+.provider-gate-arrow {
+  margin-left: 6px;
+  color: var(--text-secondary);
+}
+
+.provider-gate-action {
+  padding: 8px 9px;
+  margin-top: 2px;
+  border: 1px dashed var(--primary);
+  border-radius: var(--radius-btn);
+  background: rgba(116, 184, 252, 0.08);
+}
+
+.provider-gate-action-title {
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: var(--text-primary);
+}
+
+.provider-gate-key-row {
+  display: flex;
+  gap: 6px;
+}
+
+.provider-gate-input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+  background: var(--bg-window);
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+:root[data-theme$='dark'] .provider-gate-input {
+  border-color: var(--border-dark);
+  background: var(--bg-window-dark);
+}
+
+.provider-gate-primary {
+  flex: none;
+  padding: 5px 10px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-btn);
+  background: var(--primary);
+  color: var(--text-inverse);
+  cursor: pointer;
+}
+
+.provider-gate-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.provider-gate-error {
+  margin-top: 5px;
+  font-size: 10px;
+  color: var(--error);
+}
+
+.provider-gate-link {
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 10px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.provider-gate-foot {
+  margin-top: auto;
+  padding-top: 10px;
+  text-align: center;
+}
+
+.provider-gate-note {
+  max-width: 320px;
+  margin: 0 auto;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* 注意:这里原本有一个 .provider-gate-skip(「跳过,直接进入主界面」)。
+   主界面已经就是这一页之后,那个按钮在逻辑上不再成立,已删除。
+   test/provider-groups.test.js 里有源码守卫盯着它不许复活。 */
+
+
+/* ======== 小窗口:当前平台的用量进度条(悬停出 命中/输入/输出) ======== */
+
+.mini-usage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 2px 8px 3px;
+  /* 曾是 overflow: hidden —— 250×216 的窗口里那等于"放不下就永远看不到",
+     用户实测第三条被切掉。改成 auto:默认高度已调到放得下(无滚动条),
+     万一以后内容再长高,至少还能滚到,而不是凭空消失。 */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.mini-usage-top {
+  display: flex;
+  align-items: center;
+  margin-bottom: 3px;
+}
+
+/* 小窗里的退回:回到服务商列表(同时退出迷你模式)。
+   小窗只有 250px 宽,按钮做得很小,避免挤占平台名 */
+.mini-usage-back {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mini-usage-back:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+:root[data-theme$='dark'] .mini-usage-back {
+  border-color: var(--border-dark);
+}
+
+.mini-usage-dot {
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  flex: none;
+}
+
+/* 小窗金额:与卡片同口径(真实账单优先、没有则 ≈ 估算、0 也显示) */
+.mini-usage-cost {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.mini-usage-cost.estimated {
+  opacity: 0.85;
+}
+
+.mini-usage-empty {
+  margin-top: 8px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.mini-usage-row {
+  padding: 2px 5px;
+  border-radius: var(--radius-btn);
+}
+
+.mini-usage-row + .mini-usage-row {
+  margin-top: 1px;
+}
+
+/* 悬停整行:轻微底色 + 明细浮出(不改变任何尺寸,避免小窗口内容跳动) */
+.mini-usage-row:hover {
+  background: rgba(116, 184, 252, 0.10);
+}
+
+.mini-usage-head {
+  display: flex;
+  align-items: center;
+}
+
+.mini-usage-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 11px;
+}
+
+.mini-usage-badge {
+  margin-left: 5px;
+  padding: 0 4px;
+  border: 1px solid var(--success);
+  border-radius: 7px;
+  color: var(--success);
+  background: rgba(34, 197, 94, 0.1);
+  font-size: 9px;
+  line-height: 12px;
+}
+
+.mini-usage-badge.over {
+  border-color: var(--error);
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* 小窗「占比」视图:命中 / 输入 / 输出 三桶圆环(绿色按红线只留给"已用比例") */
+.mini-share {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 8px;
+  min-height: 0;
+  overflow-y: auto;
+}
+.mini-share-ring {
+  position: relative;
+  width: 96px;
+  height: 96px;
+}
+.mini-share-ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.mini-share-track {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 9;
+}
+.mini-share-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+}
+.mini-share-center-pct {
+  font-size: 18px;
+  font-weight: 600;
+}
+.mini-share-center-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+.mini-share-legend {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.mini-share-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+.mini-share-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.mini-share-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.mini-share-pct,
+.mini-share-tokens {
+  font-variant-numeric: tabular-nums;
+}
+.mini-share-tokens {
+  color: var(--text-secondary);
+}
+.mini-share-windows {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+.mini-share-window {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 3px 4px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mini-share-window.active {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.mini-usage-reset {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: 9px;
+}
+
+.mini-usage-bar {
+  height: 6px;
+  margin-top: 3px;
+  border-radius: 3px;
+  background: rgba(116, 184, 252, 0.16);
+  overflow: hidden;
+}
+
+.mini-usage-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--success);
+  transition: width 300ms ease-out;
+}
+
+.mini-usage-fill.over {
+  background: var(--error);
+}
+
+/* 明细槽位常驻占高,靠透明度切换:悬停不引起布局跳动 */
+.mini-usage-detail {
+  height: 12px;
+  margin-top: 1px;
+  font-size: 9px;
+  line-height: 12px;
+  color: var(--text-secondary);
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mini-usage-row:hover .mini-usage-detail {
+  opacity: 1;
+}
+
+.mini-usage-figures {
+  display: flex;
+  align-items: baseline;
+  gap: 0 6px;
+  font-size: 9px;
+  color: var(--text-secondary);
 }

@@ -509,7 +509,17 @@ async function readLocalLog(ctx, opts) {
     });
   }
   if (store && mode === 'uuid') {
-    commitUuidScanState(store, usageDaily, batch.cursors || {});
+    /* 只有**真的读到新记录**或**游标推进了**才提交整库状态。
+       缺这个守卫时,uuid 模式每轮轮询(60s)都会走一遍 storeSnapshot(全库深拷贝)+
+       `store.store = snapshot`(全量序列化+加密+落盘),哪怕 0 条新记录 —— 纯浪费,
+       而且和"读一次就要全量解密"叠在一起会把主进程卡住(审查发现的真 bug;
+       隔壁 dsh 的同类提交有 cursorsChanged 守卫,这条路径漏了)。
+       注意比较的是**值**:两侧都是各自深拷贝出来的新对象,用 `!==` 比引用会恒为 true
+       —— 那等于守卫从未生效(审查再次发现,已按 dsh 的 cursorsChanged 改为稳定序列化比较)。 */
+    const nextCursors = batch.cursors || {};
+    const storedCursors = ((store.get('localLogCursors') || {}).codex) || {};
+    const moved = JSON.stringify(storedCursors) !== JSON.stringify(nextCursors);
+    if (records.length > 0 || moved) commitUuidScanState(store, usageDaily, nextCursors);
   } else if (records.length && store) {
     store.set('usageDaily', usageDaily);
   }

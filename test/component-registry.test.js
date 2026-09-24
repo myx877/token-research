@@ -120,6 +120,18 @@ test('Codex quota, Kimi quota, and Token activity are configurable settings', ()
   });
 });
 
+test('用量汇总卡片默认可见(交付目标就是悬浮窗里看得到,不能被悄悄改回默认关闭)', () => {
+  const card = dashboardRegistry.get('usage-summary');
+  assert.ok(card, 'usage-summary');
+  assert.equal(card.defaultVisible, true);
+  assert.equal(card.settingsKey, 'components.usageSummary');
+
+  const definition = componentSettingDefinitions()
+    .find((item) => item.key === 'components.usageSummary');
+  assert.ok(definition, 'components.usageSummary');
+  assert.equal(definition.default, true);
+});
+
 test('React registry imports the canonical browser registry instead of defining another array', () => {
   const source = fs.readFileSync(
     path.resolve(__dirname, '../renderer/src/grid/components.js'),

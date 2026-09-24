@@ -30,7 +30,9 @@ function requestOptionsFor(ctx) {
 }
 
 // 把 amount.dailyData 按日持久化到 store 键 'usageDaily'('deepseek:<date>'),
-// 形状与 codex/kimi 本地日志聚合一致(total/cached),并附加 models 供热力图悬停明细。
+// 形状与 codex/kimi 本地日志聚合一致(input/cached/output/total),并附加 models 供热力图悬停明细。
+// input 取 cacheMiss、output 取 completion(cached 单独成桶),与本地日志 provider 同口径,
+// 否则日/周/月视图里 DeepSeek 的输入输出桶会恒为 0。
 function persistDaily(store, dailyData) {
   if (!Array.isArray(dailyData) || !dailyData.length) return;
   const usageDaily = store.get('usageDaily') || {};
@@ -41,9 +43,9 @@ function persistDaily(store, dailyData) {
     const total = Math.round(Number(d.total) || 0);
     if (total <= 0) return;
     usageDaily['deepseek:' + d.date] = {
-      input: 0,
+      input: Math.round(Number(d.cacheMiss) || 0),
       cached: Math.round(Number(d.cacheHit) || 0),
-      output: 0,
+      output: Math.round(Number(d.completion) || 0),
       total: total,
       models: (d.models || []).map((m) => ({ model: m.model, tokens: m.tokens }))
     };
@@ -52,8 +54,26 @@ function persistDaily(store, dailyData) {
   if (changed) store.set('usageDaily', usageDaily);
 }
 
-// 回填当前月之前的 BACKFILL_MONTHS 个月(只抓 amount,热力图不需要 cost)。
+// 把 cost.dailyData(平台账单金额)按日持久化到 store 键 'usageDailyCost'
+// ('deepseek:<date>' → 金额),供日/周/月金额视图使用。与 DSH 共用同一键与形状。
+function persistDailyCost(store, costDailyData) {
+  if (!Array.isArray(costDailyData) || !costDailyData.length) return;
+  const usageDailyCost = store.get('usageDailyCost') || {};
+  let changed = false;
+  costDailyData.forEach((d) => {
+    if (!d || !d.date) return;
+    if (!isRetainedDay(d.date, store.get('data.historyDays'))) return;
+    const cost = Number(d.total);
+    if (!Number.isFinite(cost) || cost < 0) return;
+    usageDailyCost['deepseek:' + d.date] = cost;
+    changed = true;
+  });
+  if (changed) store.set('usageDailyCost', usageDailyCost);
+}
+
+// 回填当前月之前的 BACKFILL_MONTHS 个月:token 与金额都回填(日/周/月金额视图需要历史)。
 // 已抓取过的月份(含空月)记录在 FETCHED_MONTHS_KEY,跳过;失败即停,下轮轮询重试。
+// 金额回填单独兜异常:tokens 是热力图主口径,不能因金额接口失败而中断。
 async function backfillMonths(store, token, month, year, requestOptions) {
   const done = new Set(store.get(FETCHED_MONTHS_KEY) || []);
   for (let i = 1; i <= BACKFILL_MONTHS; i++) {
@@ -65,6 +85,12 @@ async function backfillMonths(store, token, month, year, requestOptions) {
     try {
       const amount = await fetcher.fetchUsageAmount(token, m, y, requestOptions);
       persistDaily(store, amount.dailyData);
+      try {
+        const cost = await fetcher.fetchUsageCost(token, m, y, requestOptions);
+        persistDailyCost(store, cost.dailyData);
+      } catch (_) {
+        // 金额回填失败不影响 token 回填与后续月份。
+      }
       done.add(key);
       store.set(FETCHED_MONTHS_KEY, Array.from(done));
     } catch (e) {
@@ -102,6 +128,7 @@ module.exports = {
       requestOptions
     ).then((usage) => {
       if (usage && usage.amount) persistDaily(ctx.store, usage.amount.dailyData);
+      if (usage && usage.cost) persistDailyCost(ctx.store, usage.cost.dailyData);
       return backfillMonths(
         ctx.store,
         token,

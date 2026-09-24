@@ -1,6 +1,6 @@
 // 状态栏:展示 provider 快照中的成功时间、当前错误和陈旧状态。
 import React, { useEffect, useMemo, useState } from 'react';
-import { useProviders } from '../hooks/useProviders.js';
+import { useProviders } from '../store.js';
 import { summarizeProviderHealth } from '../provider-health.mjs';
 
 function formatRefresh(lastFetchedAt, now) {

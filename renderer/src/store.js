@@ -38,7 +38,7 @@ export function initProviders() {
   });
 }
 
-export function refreshProviders() {
+function refreshProviders() {
   getProviders().then((snapshot) => {
     providers = Array.isArray(snapshot) ? snapshot : [];
     emit();
@@ -63,5 +63,3 @@ export function useDashboard(providerId) {
   getDashboard(providerId);
   return snapshot;
 }
-
-export { dashboardCache };

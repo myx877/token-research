@@ -5,7 +5,7 @@ const { createTokenSpeedTracker, PROVIDER_IDS } = require('../src/main/core/toke
 const { readObservation } = require('../src/main/core/token-speed-runtime');
 
 test('PROVIDER_IDS includes dsh', () => {
-  assert.deepEqual(PROVIDER_IDS, ['deepseek', 'codex', 'kimi', 'dsh']);
+  assert.deepEqual(PROVIDER_IDS, ['deepseek', 'codex', 'kimi', 'dsh', 'claude', 'opencode']);
 });
 
 test('dsh observes, samples, and contributes metrics through the all snapshot', () => {

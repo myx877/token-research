@@ -117,7 +117,12 @@ test('App installs theme synchronization once with persisted settings and system
     'utf8'
   );
 
-  assert.match(source, /import \{ getSettings, on, send \} from '\.\/api\.js';/);
+  // 只守"App 从 api.js 拿到了这三个符号",不锁死 import 的完整形状 ——
+  // 锁死整行会让任何新增具名导入(如 toggleMini)都变成假失败。
+  ['getSettings', 'on', 'send'].forEach((symbol) => {
+    const pattern = new RegExp("import \\{[^}]*\\b" + symbol + "\\b[^}]*\\} from '\\./api\\.js';");
+    assert.match(source, pattern, 'App.jsx 必须从 ./api.js 导入 ' + symbol);
+  });
   assert.match(source, /import \{ installThemeSync \} from '\.\/theme-sync\.js';/);
   assert.match(source, /useEffect\(\(\) => installThemeSync\(\{/);
   assert.match(source, /mediaQuery:\s*window\.matchMedia\('\(prefers-color-scheme: dark\)'\)/);

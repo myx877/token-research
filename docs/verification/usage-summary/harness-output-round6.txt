@@ -1,0 +1,191 @@
+﻿# 第六轮 harness 全量输出(138 PASS / 0 FAIL / 1 SKIP)
+# 命令:npx electron scripts/verify-usage-summary-ui.js
+# SKIP 说明:mini 段 park 基线断言遇真实光标压行(用户鼠标在窗口上),按 AGENTS.md 第 9 条记 SKIP 而非假 FAIL
+# 输出为 Windows 控制台代码页,中文可能有替换符(与既有 harness-output*.txt 同况)
+
+node.exe : npm notice run deepseek-monitor@1.0.0 npx
+所在位置 行:1 字符: 1
++ & "D:\software\Node/node.exe" "C:\Users\hst\AppData\Roaming\npm/node_ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm notice run ...nitor@1.0.0 npx:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm notice run electron scripts/verify-usage-summary-ui.js
+
+椤甸潰鍦板潃: http://127.0.0.1:49554/
+PASS  棣栧睆:鍚姩鍏堝埌銆岄€夋湇鍔″晢銆嶉〉(涓嶈姹傜櫥褰?
+PASS  涓荤晫闈㈠氨鏄€岄€夋嫨瑕佺湅鐨勬湇鍔″晢銆嶈繖涓€椤?涓嶆槸鐧诲綍澧?  鈫?閫夋嫨瑕佺湅鐨勬湇鍔″晢
+PASS  涓荤晫闈㈠垪鍑哄叏閮?6 涓钩鍙? 鈫?["DeepSeek","Codex","Kimi","DSH","Claude Code","opencode"]
+PASS  涓荤晫闈㈡湭閫夊钩鍙版椂涓嶅脊 Key 杈撳叆(涓嶆槸鐧诲綍澧?  鈫?{"hasKeyInput":false,"loginLayers":0}
+PASS  鍒犳帀浜嗐€岃烦杩?鐩存帴杩涘叆涓荤晫闈€嶆寜閽? 鈫?null
+PASS  骞冲彴鍒嗘垚涓ゅぇ绫?妯″瀷骞冲彴 / 宸ュ叿骞冲彴  鈫?["妯″瀷骞冲彴","宸ュ叿骞冲彴(璇绘湰鏈烘棩蹇?"]
+PASS  鏈夈€屽叏閮ㄥ钩鍙般€嶅叆鍙?璺ㄥ钩鍙拌鍥剧殑涓婁竴绾у叆鍙?  鈫?true
+PASS  DeepSeek 鍦ㄩ灞忓氨璇存槑闇€瑕?API Key  鈫?{"name":"DeepSeek","status":"闇€瑕?API Key(濉簡鎵嶈兘璇诲畼鏂逛綑棰濅笌鐢ㄩ噺;涓嶅～鍙粺璁℃湰鏈烘棩蹇?","tone":"provider-gate-status warn"}
+PASS  鏈満鏃ュ織绫诲钩鍙板湪棣栧睆璇存槑鏃犻渶鍑瘉  鈫?璇绘湰鏈烘棩蹇?鏃犻渶鍑瘉
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-provider-gate.png
+PASS  閫変腑闇€瑕?Key 鐨勫钩鍙?鈫?灏卞湴鍑虹幇 Key 杈撳叆(涓嶅脊绐椼€佷笉璺宠浆)  鈫?{"input":true,"title":"濉叆 DeepSeek API Key","later":"绋嶅悗鍐嶉厤,鍏堢敤鏈満鏃ュ織杩涘叆","loginLayers":0}
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-provider-gate-key.png
+PASS  銆岀◢鍚庡啀閰嶃€嶅彲鍏?Key 杩涘叆涓荤晫闈?涓嶆瀯鎴愮櫥褰曞)
+PASS  杩涘叆鍚庝笁绐楀彛琛屽彇鏁拌惤瀹?闈炵┖绛?
+PASS  棣栧睆鎵€閫夊钩鍙板湪涓荤晫闈㈣嚜鍔ㄩ€変腑(褰撳墠鏈嶅姟鍟嗘爣璇嗗彲瑙?  鈫?{"selected":"DeepSeek","marker":"DeepSeek","rows":3,"hasTable":false}
+PASS  杩涘叆鍗虫槸璇ュ钩鍙扮殑涓夋潯杩涘害鏉?浠婃棩/鏈懆/鏈湀)  鈫?{"selected":"DeepSeek","marker":"DeepSeek","rows":3,"hasTable":false}
+PASS  姣忔潯杩涘害鏉￠兘鏍囨敞 鍛戒腑/杈撳叆/杈撳嚭 鏄庣粏  鈫?3 琛?脳 鍛戒腑/杈撳叆/杈撳嚭
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-provider-gate-entered.png
+PASS  鍗＄墖涓嬫媺鍒囧埌 opencode  鈫?true
+PASS  涓荤晫闈㈣繘鍏ュ崟骞冲彴瑙嗗浘(.single-provider)
+PASS  鍗曞钩鍙拌鍥炬彁绀哄綋鍓嶅彧鐪嬭皝 + 鏈夎繑鍥炲叏閮? 鈫?"褰撳墠鍙湅 opencode杩斿洖鍏ㄩ儴"
+PASS  鏍囬鏍忔爣绛炬爮浜捣褰撳墠鏈嶅姟鍟? 鈫?opencode
+PASS  鏍囬鏍忔湁閫€鍥炴寜閽?+ 鏍囩鏍忛椤规槸銆屽叏閮ㄣ€? 鈫?["鍏ㄩ儴","Codex","Kimi","DSH","Claude Code","opencode"]
+PASS  鍗曞钩鍙拌鍥句笅 grid 宸查攢姣併€佽法骞冲彴琛ㄦ牸涓嶅湪  鈫?{"hasGrid":false,"hasTable":false}
+PASS  鍗曞钩鍙颁粛鏄笁鏉¤繘搴︽潯(浠婃棩/鏈懆/鏈湀)  鈫?3
+PASS  opencode 瑙嗗浘閲屾病鏈?DS 涓撳睘璐圭敤鍖? 鈫?false
+PASS  鏌辩姸鍥炬爣棰樿窡鐫€骞冲彴璧? 鈫?opencode 姣忔棩 Token 娑堣€?PASS  鐑姏鍥鹃〉绛鹃攣瀹氫负浠呯湅璇ュ钩鍙? 鈫?浠呯湅 opencode
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-single-opencode.png
+PASS  鏍囬鏍忛€€鍥炴寜閽彲鐐? 鈫?true
+PASS  閫€鍥炲悗鍥炲埌鏈嶅姟鍟嗗垪琛?璇︽儏椤佃浣嶇粰鍒楄〃)
+PASS  鍒楄〃閲岀殑銆屽叏閮ㄥ钩鍙般€嶅叆鍙ｅ彲鐐? 鈫?true
+PASS  銆屽叏閮ㄥ钩鍙般€嶅洖鍒拌法骞冲彴琛ㄦ牸:琛ㄦ牸鍥炴潵銆佸崟瑙嗗浘娑堝け
+PASS  鍥炲叏閮ㄥ悗鏍囩鏍忛珮浜€屽叏閮ㄣ€? 鈫?鍏ㄩ儴
+PASS  鏍囩鏍忕櫧鍚嶅崟:鏈厤 Key 鐨?DeepSeek 涓嶅湪(6 椤?= 鍏ㄩ儴 + 5 涓凡灏辩华骞冲彴)  鈫?["鍏ㄩ儴","Codex","Kimi","DSH","Claude Code","opencode"]
+PASS  鏍囩鏍忔寜鍒嗙粍娓叉煋鍒嗛殧绗?姝ゅ埢鍙湁宸ュ叿骞冲彴缁勬湁鎴愬憳)  鈫?1
+PASS  鏍囩鏍忕湡鐨勫崰鍒颁簡瀹藉害(涓嶆槸濉屾垚 0 瀹界殑闅愬舰瀹瑰櫒)  鈫?{"w":363,"tabs":6,"dotVisible":true}
+PASS  椤甸潰鍔犺浇骞舵覆鏌撳嚭鐢ㄩ噺姹囨€昏〃鏍?PASS  鍗＄墖鏍囬涓恒€岀敤閲忔眹鎬汇€? 鈫?鐢ㄩ噺姹囨€?PASS  妗堕〉绛句负 鏃?鍛?鏈? 鈫?["鏃?,"鍛?,"鏈?]
+PASS  榛樿妗朵负銆屾棩銆? 鈫?鏃?PASS  鍒椾负鍚勫钩鍙?椤哄簭绋冲畾涓斿惈鏂板钩鍙?  鈫?["鏃ユ湡","DeepSeek","Codex","opencode"]
+PASS  琛屼负鏂扳啋鏃ф棩鏈? 鈫?["2026-09-17","2026-09-16","2026-09-15"]
+PASS  鍗曞厓鏍?token 涓庨噾棰濆垎琛屾樉绀? 鈫?["2026-09-17","150.0涓嚶?2.34","42.0涓団€?,"50.0涓?1.87"]
+PASS  鏃犻噾棰濆钩鍙版樉绀?鈥?codex 鏃犳寜娆¤璐?  鈫?42.0涓団€?PASS  鍚堣鍒嗗竵绉嶅睍绀?楼 涓?$(缁濅笉鐩稿姞)  鈫?534.0涓?Token 路 楼30.12 路 $3.32
+PASS  浼扮畻鍒楅粯璁ら殣钘? 鈫?[]
+PASS  鏃犻敊璇彁绀? 鈫?null
+GEOM  {"card":{"top":46,"bottom":274,"h":228},"surface":{"top":54,"bottom":266,"h":212},"table":{"top":116,"bottom":263,"h":147},"tbody":{"top":137,"bottom":242,"h":105},"tfoot":{"top":242,"bottom":263,"h":21},"totals":{"top":242,"bottom":263,"h":21},"scrollH":216,"clientH":210,"innerH":655}
+GEOM2 {"card":{"top":46,"bottom":286,"h":240},"surface":{"top":54,"bottom":278,"h":224},"table":{"top":116,"bottom":263,"h":147},"tbody":{"top":137,"bottom":242,"h":105},"tfoot":{"top":242,"bottom":263,"h":21},"totals":{"top":242,"bottom":263,"h":21},"scrollH":222,"clientH":222,"innerH":655}
+PROBE {"text":"534.0涓?Token 路 楼30.12 路 $3.32","color":"rgb(26, 26, 46)","opacity":"1","visibility":"visible","display":"table-cell","overflow":"visible","rect":{"l":239,"t":242,"w":608,"h":21},"bodyCellColor":"rgb(107, 114, 128)","surfaceBg":"rgb(248, 249, 252)","surfaceOverflow":"hidden","point":{"x":543,"y":252},"topEl":"TD.usage-summary-total","topIsTotals":true}
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-day-light.png
+INKPROFILE 8:16 12:32! 16:204! 20:169! 24:7 68:24! 72:20! 88:22 92:38! 96:29! 100:26! 124:17 128:76! 144:36! 148:39! 152:13! 156:11 160:12 164:24! 180:37! 184:38! 188:17! 192:26! 196:21! 216:29! 220:28! 224:16! 228:20! 232:12 248:16! 252:60! 256:15! 640:50 644:46
+PASS  鍚堣琛岀‘瀹炶鐢诲嚭鏉?DOM 浣嶇疆涓婃湁鍍忕礌澧ㄨ抗,涓嶆槸鍙湪 DOM 閲?  鈫?ink=91
+PASS  涓夎鏁版嵁纭疄琚敾鍑烘潵(tbody 浣嶇疆鏈夊ⅷ杩?  鈫?ink=379
+PASS  鍗＄墖姝ｄ笅鏂规病鏈夋孩鍑哄唴瀹? 鈫?ink=0
+PASS  鍗＄墖鐨勪换浣曞厓绱犻兘娌℃湁婧㈠嚭鍒板崱鐗囦箣澶? 鈫?[] 鍗＄墖涓嬫柟 y642 澶勭殑鍏冪礌=SPAN.provider-health-text
+PASS  鍏嶅嚟璇佸惎鍔?娓叉煋鐨勬槸搴旂敤涓荤晫闈?涓荤獥閲屾病鏈夌櫥褰曞眰  鈫?{"鐧诲綍灞?:0,"搴旂敤澶栧３":true,"姹囨€诲崱":true,"骞冲彴":"鍏ㄩ儴","琛ㄦ牸":true,"鑷彂閫氶亾":["settings:update","settings:update"]}
+PASS  鍏嶅嚟璇佸惎鍔?姹囨€诲崱鐓у父鎸傝浇,榛樿銆屽叏閮ㄣ€嶈法骞冲彴琛ㄦ牸鐩存帴鍙敤  鈫?{"鍗?:true,"琛?:true,"骞冲彴":"鍏ㄩ儴"}
+PASS  鍏嶅嚟璇佸惎鍔?娌℃湁鑷彂浠讳綍鐧诲綍閫氶亾(涓嶄細鑷姩寮瑰钩鍙扮櫥褰曠獥)  鈫?["settings:update","settings:update"]
+PASS  鍏嶅嚟璇佸惎鍔?閫変腑鏈厤 Key 鐨?DeepSeek,灏卞湴缁欏唴鑱旇緭鍏?涓嶅脊绐椼€佷笉璺宠浆)  鈫?picked=true input=true
+PASS  鍏嶅嚟璇佸惎鍔?鏈満鍙ｅ緞浠婃棩/鏈懆/鏈湀涓夎鐓у父(姣忚閮芥湁 Token 鏁?  鈫?{"rows":3,"labels":["浠婃棩","鏈懆","鏈湀"],"figures":["96.0涓?Token楼8.12","364.0涓?Token楼30.12","580.0涓?Token楼48.24"],"sent":["settings:update","settings:update"]}
+PASS  鍏嶅嚟璇佸惎鍔?璧板畬"閫夊钩鍙?+ 灏卞湴琛?Key"浠嶆棤鑷彂鐧诲綍閫氶亾  鈫?["settings:update","settings:update"]
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-boot-nocred.png
+PASS  浼扮畻寮€鍏冲瓨鍦ㄤ笖鍙偣(銆屽叏閮ㄣ€嶈〃鏍艰鍥?  鈫?true
+PASS  鎵撳紑浼扮畻鍚庡嚭鐜颁及绠楀垪  鈫?["鈮?3.22","鈮?2.91"]
+PASS  浼扮畻鍊间笌鐪熷疄閲戦鍖哄垎(鈮?鍓嶇紑)  鈫?["鈮?3.22","鈮?2.91"]
+PASS  鍚堣琛屼篃甯︿及绠?鎸夊竵绉嶅垎寮€)  鈫?534.0涓?Token 路 楼30.12 路 $3.32 路 鈮?6.13
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-day-estimate.png
+PASS  鍒囧埌鍛ㄦ《鍚庢寜 ISO 鍛ㄩ敭灞曠ず  鈫?["2026-W38","2026-W37"]
+PASS  姣忔鍒囨崲閮藉甫 from/to 閲嶆柊鍙栨暟  鈫?["day:2026-09-18..2026-09-24","day:2026-09-18..2026-09-24","day:2026-09-18..2026-09-24","day:2026-09-18..2026-09-24","day:2026-09-18..2026-09-24","day:2026-09-18..2026-09-24","day:2026-09-18..2026-09-24","day:2026-09-18..2026-09-24","week:2026-07-31..2026-09-24"]
+PASS  鏈堟《琛ㄦ牸:淇濈暀 7 澶╂椂鎸戞槑鏈堜唤琛屽彧瑕嗙洊淇濈暀绐楀彛  鈫?"鍘嗗彶鍙繚鐣?7 澶?2026-09-17 涔嬪墠鐨勬棩鏈熷凡娓呯悊,銆屾湀浠姐€嶈鍙粺璁′繚鐣欑獥鍙ｅ唴鐨勭敤閲?鍦ㄣ€岃缃?鈫?鍘嗗彶鏁版嵁淇濈暀銆嶆敼澶у悗鐐广€屽悓姝ュ巻鍙层€嶅嵆鍙ˉ榻?
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-retention-table-month.png
+PASS  鏈堟《琛ㄦ牸:淇濈暀 90 澶╂椂涓嶅啀鎻愮ず(涓嶈鎶?
+PASS  閫夋嫨鍣ㄥ惈銆屽叏閮ㄣ€? 鍏ㄩ儴 6 涓钩鍙? 鈫?["鍏ㄩ儴","DeepSeek","Codex","Kimi","DSH","Claude Code","opencode"]
+PASS  骞冲彴閫夋嫨鍣ㄥ垏鍒?opencode  鈫?opencode
+PASS  鍗曞钩鍙拌鍥炬槸 浠婃棩/鏈懆/鏈湀 涓夎  鈫?["浠婃棩","鏈懆","鏈湀"]
+PASS  鍗曞钩鍙拌鍥句笉鍐嶆樉绀鸿法骞冲彴琛ㄦ牸涓庢《椤电  鈫?table=false 妗堕〉绛?0
+PASS  宸茬敤鐧惧垎姣斿窘绔犳寜棰勭畻缁欏嚭(25% / 30% / 170%)  鈫?["25%棰勭畻","30%棰勭畻","170%棰勭畻"]
+PASS  寰界珷鏍囨敞鍒嗘瘝鏉ユ簮:棰勭畻濉殑灏辩畻銆岄绠椼€? 鈫?["25%棰勭畻","30%棰勭畻","170%棰勭畻"]
+PASS  瓒呴绠楅偅琛屾爣绾?鍏朵綑涓嶆爣绾? 鈫?[false,false,true]
+PASS  閲嶇疆鍊掕鏃剁敤鐩稿鏃堕棿涓斿湪鍚堢悊閲忕骇(浠婃棩鈮?0.5h / 鏈懆鈮?17h / 鏈湀鈮?88h)  鈫?["10灏忔椂29鍒嗗悗閲嶇疆","4澶?0灏忔椂鍚庨噸缃?,"11澶?3灏忔椂鍚庨噸缃?] 鈫?[10.483333333333333,116,287]
+PASS  姣忚閮芥湁 token 涓庨噾棰? 鈫?["130.0涓?Token棰勭畻 $4.00$1.00","195.0涓?Token棰勭畻 $5.00$1.50","208.0涓?Token棰勭畻 $1.00$1.70"]
+PASS  棰勭畻鏁板€间竴璧锋樉绀?鐭ラ亾鍒嗘瘝鏄灏?  鈫?130.0涓?Token棰勭畻 $4.00$1.00
+PASS  杩涘害鏉￠暱搴︿笌鐧惧垎姣斾竴鑷?25% 琛?鈮?0.25)  鈫?0.25
+PASS  瓒呴绠楄繘搴︽潯灏侀《鍦?100%(涓嶆孩鍑哄鍣?  鈫?1
+PASS  娌¤棰勭畻鐨勫钩鍙版墠娌℃湁寰界珷(鏈钩鍙颁笁琛岄兘鏈?  鈫?badges=3 bars=3
+PASS  鍒囧钩鍙版椂鎸?provider 閲嶆柊鍙栫獥鍙ｆ暟鎹? 鈫?["deepseek","opencode","deepseek","opencode"]
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-window-opencode.png
+PASS  杩涘害鏉℃槑缁嗛粯璁や笉鍙(涓嶆偓鍋滄椂涓嶅睍绀?鍛戒腑/杈撳叆/杈撳嚭)  鈫?["0","0","0"]
+PASS  榧犳爣鎮仠鍦ㄧ涓€鏉¤繘搴︽潯涓?璇ヨ 鍛戒腑/杈撳叆/杈撳嚭 娴幇,鍏朵綑琛屼繚鎸侀殣钘? 鈫?["1","0","0"]
+PASS  閲戦鏄剧ず鍦ㄨ繘搴︽潯鐨勫彸涓嬭(鍙崇瀵归綈銆佷綅浜庢潯涓嬫柟)  鈫?{"cost":"$1.00","costRight":846,"barRight":846,"costTop":149,"barBottom":144}
+PASS  娌¤棰勭畻:杩涘害鏉＄収鐢?绌鸿建閬?,浣嗕笉缁欎换浣曠櫨鍒嗘瘮鏁板瓧  鈫?badges=3 bars=3 濉厖褰掗浂=true ["鏃犲垎姣?,"鏃犲垎姣?,"鏃犲垎姣?]
+PASS  娌¤棰勭畻:寰界珷鐩磋銆屾棤鍒嗘瘝銆?涓嶆樉绀?0% 杩欑缂栧嚭鏉ョ殑鏁板瓧)  鈫?["鏃犲垎姣?,"鏃犲垎姣?,"鏃犲垎姣?]
+PASS  娌¤棰勭畻:鍛戒腑/杈撳叆/杈撳嚭鏄庣粏鐓у父鏍囨敞  鈫?3 琛屾槑缁嗛兘鍦?鍒嗘瘝缂哄け涓嶅奖鍝嶄笁妗剁粺璁?
+PASS  娌¤棰勭畻:缁欏嚭銆屽幓璁剧疆閲屽～棰勭畻銆嶇殑鎻愮ず  鈫?鏈棰勭畻 鈫?鍙樉绀虹敤閲忎笌閲戦;鍦ㄣ€岃缃?鈫?棰勭畻銆嶉噷濉?DeepSeek 鐨勬瘡鏃?姣忓懆/姣忔湀棰勭畻鍗冲彲鏄剧ず鐧惧垎姣?PASS  娌¤棰勭畻:鐢ㄩ噺涓庨噾棰濈収甯告樉绀?甯佺涓?楼)  鈫?["96.0涓?Token楼8.12","364.0涓?Token楼30.12","580.0涓?Token楼48.24"]
+PASS  涓夎鐨勯噸缃€掕鏃堕兘鍦? 鈫?["5灏忔椂59鍒嗗悗閲嶇疆","4澶?0灏忔椂鍚庨噸缃?,"11澶?3灏忔椂鍚庨噸缃?]
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-window-nobudget.png
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-window-empty-platform.png
+UNIFORM [{"label":"DeepSeek","id":"deepseek","picked":true,"threeRows":true,"noTable":true,"resets":true,"figures":true},{"label":"Codex","id":"codex","picked":true,"threeRows":true,"noTable":true,"resets":true,"figures":true},{"label":"Kimi","id":"kimi","picked":true,"threeRows":true,"noTable":true,"resets":true,"figures":true},{"label":"DSH","id":"dsh","picked":true,"threeRows":true,"noTable":true,"resets":true,"figures":true},{"label":"Claude Code","id":"claude","picked":true,"threeRows":true,"noTable":true,"resets":true,"figures":true},{"label":"opencode","id":"opencode","picked":true,"threeRows":true,"noTable":true,"resets":true,"figures":true}]
+PASS  6 涓钩鍙伴€愪釜鍒囪繃鍘婚兘鏄悓涓€濂楀崱鐗?浠婃棩/鏈懆/鏈湀 + 鍊掕鏃?+ token/閲戦)  鈫?[]
+PASS  娌℃暟鎹殑骞冲彴涔熺収鏍风粰涓夎(涓嶆槸绌虹櫧/涓嶆槸绌烘暟缁?  鈫?[]
+PASS  娌℃湁鐪熷疄璐﹀崟鐨勫钩鍙颁篃鏄剧ず閲戦($0.00),涓嶆妸 0 钘忚捣鏉? 鈫?["$0.00","$0.00","$0.00"]
+PASS  娌℃湁鐪熷疄璐﹀崟浣嗘湁璁㈤槄鎽婅杽浼扮畻:鏄剧ず 鈮?鍓嶇紑 + estimated 鏍囪 + 璇存槑杩欎笉鏄钩鍙拌处鍗? 鈫?[{"text":"鈮?12.50","estimated":true,"title":"璁㈤槄璐规寜褰撴湀 token 鎽婅杽浼扮畻(璁剧疆 鈫?閲戦閲屽～鏈堣垂),鈮?琛ㄧず涓嶆槸骞冲彴鐪熷疄璐﹀崟"},{"text":"鈮?12.50","estimated":true,"title":"璁㈤槄璐规寜褰撴湀 token 鎽婅杽浼扮畻(璁剧疆 鈫?閲戦閲屽～鏈堣垂),鈮?琛ㄧず涓嶆槸骞冲彴鐪熷疄璐﹀崟"},{"text":"鈮?12.50","estimated":true,"title":"璁㈤槄璐规寜褰撴湀 token 鎽婅杽浼扮畻(璁剧疆 鈫?閲戦閲屽～鏈堣垂),鈮?琛ㄧず涓嶆槸骞冲彴鐪熷疄璐﹀崟"}]
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-window-estimated-cost.png
+PASS  绐楀彛鍗?淇濈暀 7 澶╂椂鎸戞槑銆屾湰鏈堛€嶄粎缁熻杩?7 澶? 鈫?"鍘嗗彶鍙繚鐣?7 澶?銆屾湰鏈堛€嶄粎缁熻杩?7 澶?鍦ㄣ€岃缃?鈫?鍘嗗彶鏁版嵁淇濈暀銆嶆敼涓烘洿澶у€煎悗鐐广€屽悓姝ュ巻鍙层€嶅嵆鍙ˉ榻?
+PASS  鍙ｅ緞鎶湶涓庨绠楁彁绀哄苟瀛?涓ゅ潡鎻愮ず浜掍笉鍚炴帀)  鈫?{"text":"鍘嗗彶鍙繚鐣?7 澶?銆屾湰鏈堛€嶄粎缁熻杩?7 澶?鍦ㄣ€岃缃?鈫?鍘嗗彶鏁版嵁淇濈暀銆嶆敼涓烘洿澶у€煎悗鐐广€屽悓姝ュ巻鍙层€嶅嵆鍙ˉ榻?,"budgetHint":"鏈棰勭畻 鈫?鍙樉绀虹敤閲忎笌閲戦;鍦ㄣ€岃缃?鈫?棰勭畻銆嶉噷濉?DeepSeek 鐨勬瘡鏃?姣忓懆/姣忔湀棰勭畻鍗冲彲鏄剧ず鐧惧垎姣?,"rows":3}
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-retention-window-7d.png
+PASS  绐楀彛鍗?淇濈暀 90 澶╂椂涓嶅啀鎻愮ず(涓嶈鎶ャ€佷笉鍒堕€犲櫔闊?
+PASS  鍒囧洖銆屽叏閮ㄣ€嶆仮澶嶈法骞冲彴琛ㄦ牸  鈫?tableBack=true
+PASS  鏈厤 Key 鐨?DeepSeek:鍗＄墖鍐呭嚭鐜?API Key 鍐呰仈杈撳叆鍖? 鈫?{"notice":"鏈厤缃?DeepSeek API Key:褰撳墠鍙粺璁℃湰鏈烘棩蹇?濉叆鍚庡彲璇诲畼鏂逛綑棰濅笌鐢ㄩ噺淇濆瓨骞堕獙璇?,"hasInput":true,"inputType":"password","btn":"淇濆瓨骞堕獙璇?,"rows":3,"rowLabels":["浠婃棩","鏈懆","鏈湀"],"selected":"DeepSeek"}
+PASS  鏈厤 Key 鐨?DeepSeek:鏈満鍙ｅ緞浠婃棩/鏈懆/鏈湀涓夎鐓ф棫鍦? 鈫?["浠婃棩","鏈懆","鏈湀"]
+PASS  鏈厤 Key 鐨?DeepSeek:鏂囨鏄庤缂轰粈涔?API Key)涓斾氦浠ｅ奖鍝嶈寖鍥? 鈫?鏈厤缃?DeepSeek API Key:褰撳墠鍙粺璁℃湰鏈烘棩蹇?濉叆鍚庡彲璇诲畼鏂逛綑棰濅笌鐢ㄩ噺淇濆瓨骞堕獙璇?PASS  鏈厤 Key 鐨?DeepSeek:缁欑殑鏄€屼繚瀛樺苟楠岃瘉銆嶅叆鍙? 鈫?淇濆瓨骞堕獙璇?SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-cred-deepseek-nokey.png
+PASS  绌鸿緭鍏?涓嶅彂鏍￠獙璇锋眰,灏卞湴缁欐彁绀? 鈫?clicked=true calls=0 err=璇峰厛濉叆 API Key hasInput=true notice="鏈厤缃?DeepSeek API Key:褰撳墠鍙粺璁℃湰鏈烘棩蹇?濉叆鍚庡彲璇诲畼鏂逛綑棰濅笌鐢ㄩ噺淇濆瓨骞堕獙璇佽鍏堝～鍏?API Key"
+PASS  鏄庢樉闈炴硶杈撳叆:涓嶅彂鏍￠獙璇锋眰,鎻愮ず鏍煎紡闂  鈫?draft=abc calls=0 err=鏍煎紡涓嶅儚 DeepSeek API Key(褰㈠ sk-...),鏈彂閫佹牎楠岃姹?PASS  鏍￠獙澶辫触:閫氶亾纭疄琚皟鐢ㄤ簡涓€娆?甯﹂敭鍏ュ€?  鈫?calls=1
+PASS  鏍￠獙澶辫触:鏄剧ず閿欒鏂囨涓斾粛鍋滃湪"鏈厤缃?杈撳叆鎬? 鈫?{"notice":"鏈厤缃?DeepSeek API Key:褰撳墠鍙粺璁℃湰鏈烘棩蹇?濉叆鍚庡彲璇诲畼鏂逛綑棰濅笌鐢ㄩ噺淇濆瓨骞堕獙璇丄PI Key 鏍￠獙澶辫触:璇风‘璁ゅ鍒跺畬鏁淬€佹湭杩囨湡(鏈繚瀛?","hasInput":true,"draft":"sk-00000000000000000000000000000000","btn":"淇濆瓨骞堕獙璇?,"btnDisabled":false,"error":"API Key 鏍￠獙澶辫触:璇风‘璁ゅ鍒跺畬鏁淬€佹湭杩囨湡(鏈繚瀛?","rows":3}
+PASS  鏍￠獙澶辫触:apiKeySet 浠嶄负 false(娌℃湁鍐欏叆 store)  鈫?false
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-cred-key-invalid.png
+PASS  鏍￠獙鎴愬姛:鍗＄墖鏀瑰彛(杈撳叆鏀惰捣 鈫?杞€岀櫥褰曞钩鍙般€?涓旈噸鎷夎缃埛鏂? 鈫?{"notice":"宸查厤缃?API Key(鍙浣欓);瀹樻柟鐢ㄩ噺闇€瑕佺櫥褰?DeepSeek 骞冲彴鐧诲綍骞冲彴","hasInput":false,"draft":null,"btn":"鐧诲綍骞冲彴","btnDisabled":false,"error":null,"rows":3} refetched=2
+PASS  鏍￠獙鎴愬姛鍚庤緭鍏ユ閲岀殑鑽夌琚竻绌?涓嶇暀鏄庢枃)  鈫?true
+PASS  閰嶅ソ Key 鍚?DeepSeek 绔嬪埢杩涘叆鏍囩鏍?鐧藉悕鍗曠湅 apiKeySet,涓嶈姹傚厛鐧诲綍骞冲彴)  鈫?["鍏ㄩ儴","DeepSeek","DSH","Claude Code","opencode"]
+PASS  DeepSeek 灏辩华鍚庛€屾ā鍨嬪钩鍙般€嶇粍鍑虹幇(鍒嗛殧绗︿粠 1 鍙?2)  鈫?2
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-cred-key-saved.png
+PASS  鏈?Key 鏈櫥骞冲彴:杈撳叆妗嗘敹璧枫€佹寜閽彉銆岀櫥褰曞钩鍙般€? 鈫?{"notice":"宸查厤缃?API Key(鍙浣欓);瀹樻柟鐢ㄩ噺闇€瑕佺櫥褰?DeepSeek 骞冲彴鐧诲綍骞冲彴","hasInput":false,"inputType":null,"btn":"鐧诲綍骞冲彴","rows":3,"rowLabels":["浠婃棩","鏈懆","鏈湀"],"selected":"DeepSeek"}
+PASS  鏈?Key 鏈櫥骞冲彴:鏂囨鍖哄垎銆屼綑棰濆彲璇汇€嶄笌銆屽畼鏂圭敤閲忛渶鐧诲綍銆? 鈫?宸查厤缃?API Key(鍙浣欓);瀹樻柟鐢ㄩ噺闇€瑕佺櫥褰?DeepSeek 骞冲彴鐧诲綍骞冲彴
+PASS  鐐广€岀櫥褰曞钩鍙般€嶇湡鐨勮蛋 session:relogin 鎸夐渶閫氶亾  鈫?["settings:update","settings:update","refresh:dashboard","session:relogin"]
+PASS  Key 涓庡钩鍙扮櫥褰曢兘榻?闆跺嚟璇佹彁绀?涓夎鐓у父  鈫?{"notice":null,"hasInput":false,"inputType":null,"btn":null,"rows":3,"rowLabels":["浠婃棩","鏈懆","鏈湀"],"selected":"DeepSeek"}
+PASS  鏍囩鏍忕櫧鍚嶅崟:鍑瘉澶辨晥鐨勫钩鍙?codex 杩囨湡 / kimi 缂哄け)浠庢爣绛炬爮娑堝け  鈫?["鍏ㄩ儴","DeepSeek","DSH","Claude Code","opencode"]
+CRED-CLEAN [{"label":"opencode","picked":true,"notice":null,"rows":3},{"label":"DSH","picked":true,"notice":null,"rows":3},{"label":"Claude Code","picked":true,"notice":null,"rows":3}]
+PASS  鏃犻渶鍑瘉鐨勫钩鍙?opencode / DSH / Claude Code):闆跺嚟璇佹彁绀轰笖涓夎鐓у父  鈫?[{"label":"opencode","picked":true,"notice":null,"rows":3},{"label":"DSH","picked":true,"notice":null,"rows":3},{"label":"Claude Code","picked":true,"notice":null,"rows":3}]
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-cred-codex-expired.png
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-cred-kimi-missing.png
+CRED-LOCAL [{"label":"Codex","picked":true,"btn":"绔嬪嵆閲嶈瘯","hasInput":false,"hintOk":true,"retried":true},{"label":"Kimi","picked":true,"btn":"绔嬪嵆閲嶈瘯","hasInput":false,"hintOk":true,"retried":true}]
+PASS  codex/kimi 缂烘湰鏈哄嚟璇?缁欏嚭缂哄け鍘熷洜 + 銆岀珛鍗抽噸璇曘€嶅叆鍙?涓嶆槸鍐呰仈杈?Key)  鈫?[{"label":"Codex","picked":true,"btn":"绔嬪嵆閲嶈瘯","hasInput":false,"hintOk":true,"retried":true},{"label":"Kimi","picked":true,"btn":"绔嬪嵆閲嶈瘯","hasInput":false,"hintOk":true,"retried":true}]
+PASS  鐐广€岀珛鍗抽噸璇曘€嶇湡鐨勮蛋 refresh:dashboard  鈫?[{"label":"Codex","picked":true,"btn":"绔嬪嵆閲嶈瘯","hasInput":false,"hintOk":true,"retried":true},{"label":"Kimi","picked":true,"btn":"绔嬪嵆閲嶈瘯","hasInput":false,"hintOk":true,"retried":true}]
+PASS  骞冲彴鐘舵€佸箍鎾悗鍑瘉鎻愮ず闅忎箣娑堝け(璁㈤槄鍒锋柊,涓嶆槸涓€娆℃€у揩鐓?  鈫?cleared=true
+PASS  鍑瘉鎭㈠鍚庡钩鍙扮珛鍒诲洖鍒版爣绛炬爮(鐧藉悕鍗曞悓鏍锋槸璁㈤槄鍒锋柊)
+PASS  鏆楄壊涓婚缁?settings:loaded 鐢熸晥  鈫?dark/true
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-week-dark.png
+PASS  鏆楄壊涓婚涓嬬獥鍙ｅ崱鐓у父娓叉煋  鈫?picked=true rows=3
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-window-dark.png
+PASS  娴呰壊鎴浘纭疄鏄祬搴?浜儚绱犲崰澶氭暟)  鈫?灏哄 884x655 鍧囦寒搴?247.3 鏆楀儚绱?0.2% 浜儚绱?99.1% 琛ㄦ牸甯﹀ⅷ杩?0.6% 琛ㄦ牸甯︿寒瀛?99.6% 骞冲彴鑹茬偣 {"deepseek":1685,"codex":1470,"opencode":1387}
+PASS  娴呰壊鎴浘琛ㄦ牸鍖哄煙纭湁澧ㄨ抗(闈炵┖鐧藉抚)  鈫?灏哄 884x655 鍧囦寒搴?247.3 鏆楀儚绱?0.2% 浜儚绱?99.1% 琛ㄦ牸甯﹀ⅷ杩?0.6% 琛ㄦ牸甯︿寒瀛?99.6% 骞冲彴鑹茬偣 {"deepseek":1685,"codex":1470,"opencode":1387}
+PASS  涓夊紶鎴浘鐨勫钩鍙拌壊鐐归兘鐪熷疄娓叉煋鍑烘潵浜? 鈫?灏哄 884x655 鍧囦寒搴?247.3 鏆楀儚绱?0.2% 浜儚绱?99.1% 琛ㄦ牸甯﹀ⅷ杩?0.6% 琛ㄦ牸甯︿寒瀛?99.6% 骞冲彴鑹茬偣 {"deepseek":1685,"codex":1470,"opencode":1387}
+PASS  娣辫壊鎴浘纭疄鏄繁搴?鏆楀儚绱犲崰澶氭暟)  鈫?灏哄 884x655 鍧囦寒搴?44.2 鏆楀儚绱?98.2% 浜儚绱?0.2% 琛ㄦ牸甯﹀ⅷ杩?99.7% 琛ㄦ牸甯︿寒瀛?0.9% 骞冲彴鑹茬偣 {"deepseek":1117,"codex":1150,"opencode":783}
+PASS  娣辫壊鎴浘琛ㄦ牸鍖哄煙纭湁浜壊鏂囧瓧(鏆楀簳鐧藉瓧)  鈫?灏哄 884x655 鍧囦寒搴?44.2 鏆楀儚绱?98.2% 浜儚绱?0.2% 琛ㄦ牸甯﹀ⅷ杩?99.7% 琛ㄦ牸甯︿寒瀛?0.9% 骞冲彴鑹茬偣 {"deepseek":1117,"codex":1150,"opencode":783}
+PASS  浼扮畻寮€鍚抚涓庝及绠楀叧闂抚涓嶆槸鍚屼竴寮犲浘  鈫?灏哄 884x655 鍧囦寒搴?247.4 鏆楀儚绱?0.2% 浜儚绱?99.1% 琛ㄦ牸甯﹀ⅷ杩?0.7% 琛ㄦ牸甯︿寒瀛?99.6% 骞冲彴鑹茬偣 {"deepseek":1670,"codex":1476,"opencode":1384}
+PASS  绐楀彛鍗℃埅鍥?鏈夐绠?纭湁澧ㄨ抗,涓嶆槸绌虹櫧甯? 鈫?灏哄 884x655 鍧囦寒搴?245.2 鏆楀儚绱?0.1% 浜儚绱?97.2% 琛ㄦ牸甯﹀ⅷ杩?3.5% 琛ㄦ牸甯︿寒瀛?97.1% 骞冲彴鑹茬偣 {"deepseek":2641,"codex":2361,"opencode":2091}
+CARD-INK 鍗＄墖鐭╁舰={"x":23,"y":109,"width":832,"height":249} 缁垮儚绱?3000(鍗曡鏈€澶?244) 绾㈠儚绱?5334(鍗曡鏈€澶?814)
+PASS  缁胯壊杩涘害鏉′笌缁胯壊寰界珷鐪熺殑娓叉煋鍑烘潵浜?鍗＄墖鍐呮垚鐗囩豢鍍忕礌)  鈫?缁?3000 鍗曡鏈€澶?244
+PASS  瓒呴绠楅偅琛岀湡鐨勬爣绾?鍗＄墖鍐呮垚鐗囩孩鍍忕礌,涓嶆槸鏂囧瓧褰╄竟)  鈫?绾?5334 鍗曡鏈€澶?814
+CARD-INK 鏃犻绠楀崱鐗囩煩褰?{"x":23,"y":109,"width":832,"height":282} 缁垮儚绱?0(鍗曡鏈€澶?0) 绾㈠儚绱?181(鍗曡鏈€澶?17) 鈥斺€?绾㈠儚绱犲凡鏌ヨ瘉涓哄瓧褰㈣竟缂樺僵杈?闈炵孩鑹插浘鍏?PASS  娌¤棰勭畻閭ｅ紶:鍗＄墖鍐呬竴涓豢鏉?涓€涓豢寰界珷閮芥病鏈?涓嶇紪鐧惧垎姣?  鈫?缁?0
+PASS  娌¤棰勭畻閭ｅ紶:涔熸病鏈変换浣曟垚鐗囩孩鑹插厓绱?鏃犲憡璀︽潯)  鈫?绾㈠崟琛屾渶澶?17
+PASS  鏆楄壊绐楀彛鍗?娣卞簳涓旀枃瀛楀彲瑙? 鈫?灏哄 884x655 鍧囦寒搴?44.6 鏆楀儚绱?96.9% 浜儚绱?0.3% 琛ㄦ牸甯﹀ⅷ杩?99.6% 琛ㄦ牸甯︿寒瀛?0.9% 骞冲彴鑹茬偣 {"deepseek":1185,"codex":1322,"opencode":978}
+CARD-INK 鏆楄壊鍗＄墖鐭╁舰={"x":23,"y":109,"width":832,"height":249} 缁垮儚绱?3262
+PASS  鏆楄壊绐楀彛鍗＄殑缁挎潯涔熺敾鍑烘潵浜? 鈫?3262
+PASS  灏忕獥鍙ｅ彧鏄剧ず褰撳墠鏈嶅姟鍟嗙殑涓夋潯杩涘害鏉?涓嶅甫澶у崱/琛ㄦ牸)  鈫?{"labels":["浠婃棩","鏈懆","鏈湀"],"card":false,"table":false}
+PASS  灏忕獥鍙ｆ樉绀哄綋鍓嶆湇鍔″晢鏍囪瘑  鈫?opencode
+PASS  灏忕獥鍙ｇ櫨鍒嗘瘮涓庡ぇ鍗″悓婧?25% / 30% / 170%)  鈫?["25%","30%","170%"]
+PASS  灏忕獥鍙ｈ繘搴︽潯瀹藉害涓庣櫨鍒嗘瘮涓€鑷?25% 琛?鈮?0.25)  鈫?{"fill":214.5,"track":858}
+PASS  灏忕獥鍙ｄ笁鏉℃槑缁嗛兘甯?鍛戒腑/杈撳叆/杈撳嚭 鏂囧瓧  鈫?["鍛戒腑 78.0涓?路 杈撳叆 104.0涓?路 杈撳嚭 26.0涓?,"鍛戒腑 117.0涓?路 杈撳叆 156.0涓?路 杈撳嚭 39.0涓?,"鍛戒腑 124.8涓?路 杈撳叆 166.4涓?路 杈撳嚭 41.6涓?]
+SKIP 鎸囬拡 park 琚湡瀹炲厜鏍囨尅浣?榧犳爣姝ｅ帇鍦ㄥ皬绐楄涓?,璇ヨ鏁颁粎渚涘弬鑰? ["0","0","0.86665"]
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-mini-usage.png
+HOVER-ROUTE 鍚堟垚 mouseMove 鈫?["1","0","0"]
+PASS  榧犳爣鎮仠鍦ㄧ涓€鏉¤繘搴︽潯涓?璇ヨ鏄庣粏娴幇(鍏朵綑琛屼繚鎸侀殣钘?  鈫?["1","0","0"]
+PASS  鎮仠涓嶅紩璧峰竷灞€璺冲姩(鏉＄殑浣嶇疆/瀹藉害涓嶅彉)  鈫?{"before":{"x":442,"y":80,"w":858},"after":{"x":442,"y":80,"w":858}}
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-mini-usage-hover.png
+PASS  灏忕獥瑙嗗浘鍒囨崲鎸夐挳瀛樺湪涓斿彲鐐? 鈫?true
+PASS  鍙垏鍥炴棫鐨勩€岄搴﹀渾鐜?+ 閫熷害銆嶅皬绐楄鍥?鏃ц兘鍔涙病琚垹)
+PASS  鍐嶅垏鍥炵敤閲忚繘搴︽潯瑙嗗浘(妯″紡鍙潵鍥炲垏)
+PASS  灏忕獥涓嬫媺鍚屾牱鍙楃櫧鍚嶅崟绾︽潫(鍙垪宸插氨缁殑 6 涓钩鍙?  鈫?["DeepSeek","Codex","Kimi","DSH","Claude Code","opencode"]
+PASS  灏忕獥鍐呭彲鍒囨崲鏈嶅姟鍟?涓嬫媺鍙€?DeepSeek)  鈫?true
+PASS  灏忕獥銆屾棤鍒嗘瘝銆嶅窘绔犳槸涓€х伆銆佷笉绌跨豢涔熶笉绌跨孩(棰滆壊璇箟涓嶈绋€閲?  鈫?[{"text":"鏃犲垎姣?,"hasNone":true,"color":"rgb(107, 114, 128)","border":"rgb(229, 231, 235)"},{"text":"鏃犲垎姣?,"hasNone":true,"color":"rgb(107, 114, 128)","border":"rgb(229, 231, 235)"},{"text":"鏃犲垎姣?,"hasNone":true,"color":"rgb(107, 114, 128)","border":"rgb(229, 231, 235)"}]
+SHOT  C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\electron-mini-nobudget.png
+PASS  灏忕獥鏈夐€€鍥炴寜閽?鍥炴湇鍔″晢鍒楄〃)  鈫?true
+PASS  灏忕獥閫€鍥炲悓鏃跺彂鍑洪€€鍑鸿糠浣犺姹? 鈫?["settings:update","settings:update","refresh:dashboard","session:relogin","refresh:dashboard","refresh:dashboard","window:toggle-mini"]
+PASS  閫€鍥炲悗涓荤獥钀藉湪鏈嶅姟鍟嗗垪琛?涓嶆槸璇︽儏椤?
+
+鍏ㄩ儴鏂█閫氳繃(0 涓け璐?
+鎴浘鐩綍: C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary
+EXIT=0

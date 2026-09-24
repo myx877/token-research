@@ -57,7 +57,9 @@
 | DeepSeek | API Key 查询余额;内置代理会话(首次需登录 DeepSeek 平台)获取用量明细 |
 | Codex | 只读复用本机 Codex CLI 凭证(由 CLI 自己保活刷新,无需重复登录) |
 | Kimi | 只读复用本机 Kimi CLI 凭证(由 CLI 自己保活刷新,无需重复登录) |
-| DeepSeek Harness | 本地遥测文件(`~/.dsh/telemetry/usage-YYYY-MM-DD.jsonl`,由 DSH 的 usage-telemetry 组件按请求追加) |
+| DeepSeek Harness | 只读本机 DSH 会话日志(`~/.dsh/sessions/<项目>/<会话>/session.vN.jsonl.zstd`,DSH 自己写入;统计 `assistant/message` 的 usage 四桶)。若另有 `~/.dsh/telemetry/usage-YYYY-MM-DD.jsonl` 自建生产者,则仅在会话日志缺失时作为回退 |
+| Claude Code | 只读本机会话记录(`~/.claude/projects/**/*.jsonl`) |
+| opencode | 只读本机数据库(`~/.local/share/opencode/opencode.db`) |
 
 所有数据仅在本地处理,不会上传到任何第三方服务器。
 

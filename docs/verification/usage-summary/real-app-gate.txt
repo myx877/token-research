@@ -1,0 +1,97 @@
+# 真机复核:免登录首屏 → 选服务商 → 主界面 → 小窗口
+时间: 2026-09-24T08:39:09.909Z  CDP 端口: 9223
+
+## 1. 窗口清单
+  [0] title="DeepSeek Monitor" url=file:///C:/Users/hst/Desktop/TokenMonitor/renderer/dist/index.html
+疑似平台登录窗: 0
+检测到「贴边自动隐藏」为开:临时关闭并解除停靠(跑完恢复)
+
+## 2. 首屏「选服务商」(免登录)
+  应用处于迷你模式(上次使用的持久化状态),先退出迷你窗口
+  当前不在服务商列表(可能已进入过详情),点标题栏 ‹ 退回一次
+  有首屏: true
+  标题: "选择要看的服务商"
+  平台: [{"名":"DeepSeek","状态":"API Key 已配置"},{"名":"Codex","状态":"本机 CLI 凭证已过期"},{"名":"Kimi","状态":"本机 CLI 凭证缺失"},{"名":"DSH","状态":"读本机日志,无需凭证"},{"名":"Claude Code","状态":"读本机日志,无需凭证"},{"名":"opencode","状态":"读本机日志,无需凭证"}]
+  分组: ["模型平台","工具平台(读本机日志)"]
+  有全部平台入口: true
+  有跳过按钮: false
+  有详情页: false
+  登录层数: 0
+  截图已落盘: C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\real-app-gate.png
+
+## 3. 在首屏选「opencode」并进入(真实点击)
+  进入结果: entered-single-click
+  应用外壳: true
+  选择平台: "opencode"
+  当前服务商标识: "opencode"
+  有退回按钮: true
+  切换标签页数: 0
+  单平台视图: true
+  有提示条: false
+  有返回全部: false
+  柱标题: "opencode 每日 Token 消耗"
+  热力图锁定: "仅看 opencode"
+  热力图模式: ["每日","每周","累计"]
+  热力图年份: "2026"
+  有费用区: false
+  行数: 3
+  行: [{"标签":"今日","百分比":null,"明细":"命中 6.4亿输入 375.3万输出 135.0万","数值":"6.5亿 Token$3.28","条宽":107},{"标签":"本周","百分比":null,"明细":"命中 6.5亿输入 388.6万输出 138.1万","数值":"6.5亿 Token$3.32","条宽":107},{"标签":"本月","百分比":null,"明细":"命中 20.5亿输入 7206.1万输出 546.0万","数值":"21.2亿 Token$14.97","条宽":350}]
+  有表格: false
+  币种行数: 3
+  正文前160字: "Token Monitor ‹ opencode opencode 今日 7小时20分后重置 6.5亿 Token $3.28 命中 6.4亿 输入 375.3万 输出 135.0万 本周 3天7小时后重置 6.5亿 Token $3.32 命中 6.5亿 输入 388.6万 输出 138.1万 本月 6天7小时后重置"
+  用量卡滚入视野: true
+  截图已落盘: C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\real-app-main-windows.png
+
+## 4. 切到小窗口(真实主进程 window:toggle-mini)
+  进入小窗耗时 688ms;采样到的中间宽度: []
+  有小窗视图: true
+  有进度条视图: true
+  平台标识: "opencode"
+  有退回按钮: true
+  标签: ["今日","本周","本月"]
+  百分比: []
+  倒计时: ["7小时20分后重置","3天7小时后重置","6天7小时后重置"]
+  明细文字: ["命中 6.4亿 · 输入 375.6万 · 输出 135.1万","命中 6.5亿 · 输入 388.8万 · 输出 138.2万","命中 20.5亿 · 输入 7206.3万 · 输出 546.1万"]
+  明细透明度: ["0","0","0"]
+  条数: 3
+  行底边: [103,157,211]
+  窗口高: 216
+  内容需高: 192
+  可视高: 192
+  窗口尺寸: {"w":250,"h":216}
+  大卡是否还在: false
+  截图已落盘: C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\real-app-mini-usage.png
+  悬停目标条: {"x":125,"y":73,"w":224}
+  悬停后明细透明度: ["1","0","0"]
+  截图已落盘: C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\real-app-mini-usage-hover.png
+
+## 5. 恢复原状(切回完整窗口)
+  已恢复「贴边自动隐藏」为开
+  已切回完整界面: true
+  切回后的窗口尺寸: {"w":420,"h":703}
+
+## 6. 真机 IPC 往返:sync:history(修复验证)
+  结果: {"ok":true,"keys":["deepseek","codex","kimi","dsh","claude","opencode"],"retentionHint":null}
+
+
+## 7. 判定
+  主界面即服务商列表且免登录: true
+  首屏列出六个平台: true
+  无平台登录窗: true
+  进入后自动选中该平台: true
+  点行一次即进主界面(无第二步确认): true
+  单平台视图只看该平台: true
+  标题栏有退回按钮: true
+  标题栏没有服务商切换标签页: true
+  柱标题与热力图跟着平台走: true
+  热力图有三个模式页签(每日/每周/累计)且带年份: true
+  opencode 视图无 DS 费用区: true
+  主界面三条进度条带明细: true
+  小窗口只有该平台进度条: true
+  小窗三条都完整可见(没被 216px 的窗口底部切掉、也不需要滚动): true
+  小窗口有退回按钮: true
+  退出迷你后窗口尺寸真的退回来了(不是卡在 250×216): true
+  进入迷你窗口是缓动而不是硬跳变(采样到中间尺寸或耗时≥120ms): true
+  悬停后首行明细可见: true
+  悬停不影响其余行: true
+  sync:history 真机不抛错(缺陷已修): true

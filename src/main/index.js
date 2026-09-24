@@ -8,6 +8,8 @@ const registry = require('./providers/registry');
 const deepseekProvider = require('./providers/deepseek');
 const codexProvider = require('./providers/codex');
 const kimiProvider = require('./providers/kimi');
+const claudeProvider = require('./providers/claude');
+const opencodeProvider = require('./providers/opencode');
 const { detectWslKimiRoots } = require('./providers/kimi/wsl-roots');
 const dshProvider = require('./providers/dsh');
 const { startScheduler } = require('./core/scheduler');
@@ -23,7 +25,7 @@ const {
 } = require('./core/proxy-settings');
 const { createTokenSpeedRuntime } = require('./core/token-speed-runtime');
 const { createMiniMode, MINI_WIDTH, MINI_HEIGHT } = require('./core/mini-mode');
-const { wakeMostRelevantWindow } = require('./core/startup-windows');
+const { wakeMostRelevantWindow, decideStartupWindows } = require('./core/startup-windows');
 const { createEdgeDock } = require('./core/edge-dock');
 const setupIPC = require('./ipc');
 const { captureSession } = require('./providers/deepseek/session');
@@ -118,7 +120,21 @@ function broadcastToWindows(channel, payload) {
 }
 
 function broadcastSettings() {
+  refreshHotFlags();
   broadcastToWindows('settings:loaded', store.sanitizeSettings(store.store));
+}
+
+/* ---- 拖动热路径的开关缓存 ----
+   move 事件在拖动时**每帧**触发,而它要判断"贴边隐藏开没开"和"是不是迷你模式"。
+   直接 store.get 是灾难:electron-store 的每次 get 都要"全量读盘 + PBKDF2 派生密钥 + JSON.parse"
+   (配置库里有用量聚合,几十 MB 时代价更高),一次拖动就是每秒几十次全量读盘。
+   这两个值只在设置变化时才会变,所以缓存成布尔,设置一变(broadcastSettings)就刷新。 */
+let edgeAutoHideCached = false;
+let miniActiveCached = false;
+
+function refreshHotFlags() {
+  edgeAutoHideCached = !!store.get('window.edgeAutoHide');
+  miniActiveCached = !!(miniMode && miniMode.isActive());
 }
 
 function broadcastSessionState() {
@@ -240,8 +256,9 @@ function createMainWindow() {
     // 非动画的程序性 setBounds(吸附落定/恢复)的回声:不广播、不落盘、不重新评估停靠
     if (edgeDock && edgeDock.matchesCurrent(mainWindow.getBounds())) return;
     // 非回声 move = 用户在拖动:立即解除停靠,窗口才不会被吸附拽住
-    // 迷你模式始终可吸附(微缩窗口支持贴边成竖条)
-    var dockEnabled = store.get('window.edgeAutoHide') || (miniMode && miniMode.isActive());
+    // 迷你模式始终可吸附(微缩窗口支持贴边成竖条)。
+    // 这两个开关读的是**缓存**(见 refreshHotFlags):move 是每帧事件,不能在这里全量读盘。
+    var dockEnabled = edgeAutoHideCached || miniActiveCached;
     if (edgeDock && dockEnabled) edgeDock.userMoveStarted();
     sendMainWindowBounds();
     clearTimeout(moveDebounce);
@@ -315,6 +332,17 @@ function createLoginWindow() {
   loginWindow.on('closed', () => {
     loginWindow = null;
   });
+}
+
+// 按需打开「填 API Key」窗:启动不再自动弹它,改由托盘菜单触发(已开则复用并聚焦)
+function openApiKeyWindow() {
+  if (loginWindow && !loginWindow.isDestroyed()) {
+    if (typeof loginWindow.show === 'function') loginWindow.show();
+    if (typeof loginWindow.focus === 'function') loginWindow.focus();
+    return loginWindow;
+  }
+  createLoginWindow();
+  return loginWindow;
 }
 
 // 复用 DeepSeek 平台会话窗口:嗅探 /api/v0/usage/ 的非 sk- Bearer token。
@@ -412,6 +440,11 @@ function updateTrayMenu() {
     {
       label: getTraySessionLabel(getSessionSnapshot(runtime)),
       click: () => createSessionWindow()
+    },
+    // 免凭证启动后,填 Key 窗不再出现在启动路径上 —— 这里给它一个用户可点的按需入口
+    {
+      label: '设置 DeepSeek API Key…',
+      click: () => openApiKeyWindow()
     },
     { type: 'separator' },
     {
@@ -907,6 +940,9 @@ app.whenReady().then(() => {
   registry.register(codexProvider);
   registry.register(kimiProvider);
   registry.register(dshProvider);
+  // 只读本地来源:Claude Code 会话日志、opencode 用量库(均无网络请求与凭证依赖)
+  registry.register(claudeProvider);
+  registry.register(opencodeProvider);
   getProxyInput = createRuntimeProxyInputGetter();
 
   // 启动时做一次系统扫描:自动发现 WSL 环境里的 Kimi 日志目录
@@ -1004,38 +1040,40 @@ app.whenReady().then(() => {
   app.setLoginItemSettings({ openAtLogin: store.get('window.autoLaunch') });
 
   const apiKey = store.get('providers.deepseek.apiKey');
-  if (apiKey) {
-    createMainWindow();
-    mainWindow.webContents.on('did-finish-load', () => {
-      mainWindow.webContents.send('settings:loaded', store.sanitizeSettings(store.store));
-      // 迷你模式:Chromium 会在导航时恢复站点持久化的 zoom,加载完成后重新压回 1
-      if (miniMode && miniMode.isActive()) miniMode.applyMiniZoom(mainWindow);
-      // 同步当前停靠状态:渲染层加载晚于收起动画时,竖条视图也能正确出现
-      if (edgeDock) {
-        const dockMeta = edgeDock.getDockMeta();
-        mainWindow.webContents.send('edge-dock:state', {
-          state: edgeDock.getState(),
-          edge: dockMeta ? dockMeta.edge : null
-        });
-      }
-      scheduler.poll('deepseek', 'balance');
+  const storedSessionToken = store.get('providers.deepseek.sessionToken') || null;
+  // 免凭证启动:开窗清单由纯函数决定(主窗恒开、登录窗一律按需),见 core/startup-plan.js
+  const startupPlan = decideStartupWindows({ apiKey, sessionToken: storedSessionToken });
+  if (startupPlan.main) createMainWindow();
+  // 护栏:decideStartupWindows.main 目前恒 true,但这个开关就是为"将来可能不建主窗"设计的。
+  // 少了这层判断,一旦它变成 false,下一行就会在 mainWindow.webContents 上抛 TypeError(审查发现)。
+  if (!mainWindow) return;
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.send('settings:loaded', store.sanitizeSettings(store.store));
+    // 迷你模式:Chromium 会在导航时恢复站点持久化的 zoom,加载完成后重新压回 1
+    if (miniMode && miniMode.isActive()) miniMode.applyMiniZoom(mainWindow);
+    // 同步当前停靠状态:渲染层加载晚于收起动画时,竖条视图也能正确出现
+    if (edgeDock) {
+      const dockMeta = edgeDock.getDockMeta();
+      mainWindow.webContents.send('edge-dock:state', {
+        state: edgeDock.getState(),
+        edge: dockMeta ? dockMeta.edge : null
+      });
+    }
+    // 无 Key 时不轮询余额,避免必然失败的请求刷屏(卡片会提示就地补 Key)
+    if (startupPlan.balancePoll) scheduler.poll('deepseek', 'balance');
 
-      const storedSessionToken = store.get('providers.deepseek.sessionToken') || null;
-      restoreSession(runtime, storedSessionToken);
-      if (getSessionSnapshot(runtime).loggedIn) {
-        console.log('[session] startup with stored token, starting usage timer');
-        scheduler.poll('deepseek', 'usage');
-      } else {
-        console.log('[session] startup without token, opening platform login window');
-        clearSession(runtime, '请登录平台获取用量');
-        createSessionWindow();
-      }
-      broadcastSessionState();
-      updateTrayMenu();
-    });
-  } else {
-    createLoginWindow();
-  }
+    restoreSession(runtime, storedSessionToken);
+    if (startupPlan.usagePoll && getSessionSnapshot(runtime).loggedIn) {
+      console.log('[session] startup with stored token, starting usage timer');
+      scheduler.poll('deepseek', 'usage');
+    } else {
+      // 按需登录:启动不再自动弹平台登录窗(托盘菜单 / session:relogin 仍可随时触发)
+      console.log('[session] startup without token, platform login is on demand');
+      clearSession(runtime, '请登录平台获取用量');
+    }
+    broadcastSessionState();
+    updateTrayMenu();
+  });
 });
 
 app.on('window-all-closed', () => {

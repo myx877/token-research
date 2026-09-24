@@ -1,0 +1,36 @@
+# 真机复核读数
+时间: 2026-09-23T06:16:44.958Z
+CDP 端口: 9223
+
+## 1. 窗口清单(CDP target)—— 平台登录窗是否存在
+target 总数: 1
+  [0] type=page title="DeepSeek Monitor" url=file:///C:/Users/hst/Desktop/TokenMonitor/renderer/dist/index.html
+页面类 target 数: 1 → ["DeepSeek Monitor"]
+疑似平台登录窗的 target: 0 []
+
+## 2. 选平台(真实交互:点下拉 → 点「opencode」)
+选择结果: picked
+
+## 3. 主窗读数
+  已从迷你模式展开: false
+  title: "DeepSeek Monitor"
+  渲染应用外壳: true
+  主窗内登录层: 0
+  有用量汇总卡: true
+  选择平台: "opencode"
+  卡片含内联输入: false
+  内联输入类型: null
+  凭证提示: null
+  窗口卡行数: 3
+  窗口卡行: ["今日","本周","本月"]
+  正文前120字: "Token Monitor Codex 登录已过期 立即重试 凭证由本机 codex CLI 维护,请先在终端运行一次 codex,再点此重试 Kimi 暂无额度数据 余额 ¥-0.59 充值 ¥-0.59 赠金 ¥0.00 今日消耗 ¥0"
+  DeepSeek apiKeySet(主进程侧读数): true
+
+## 4. 截图
+  取证目标滚入视野: true
+  已落盘: C:\Users\hst\Desktop\TokenMonitor\docs\verification\usage-summary\walk-opencode.png
+
+## 5. 判定
+  窗口清单无平台登录窗: true
+  主窗有汇总卡: true
+  卡片含内联输入: false

@@ -21,6 +21,25 @@ export function formatReset(resetsAt, now) {
   return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ' 重置';
 }
 
+// 窗口卡倒计时文案:一律用相对时间(用户要的是"还剩多久"),不用绝对日期。
+// ≥1 天 → '4天21小时后重置';<1 天 → '4小时6分后重置';<1 小时 → '6分钟后重置'。
+export function formatCountdown(resetsAt, now) {
+  const target = resetsAt ? new Date(resetsAt).getTime() : NaN;
+  if (!Number.isFinite(target)) return '';
+  const nowMs = now || Date.now();
+  const diff = target - nowMs;
+  if (diff <= 0) return '已重置';
+
+  const totalMin = Math.max(1, Math.floor(diff / 60000));
+  const days = Math.floor(totalMin / 1440);
+  const hours = Math.floor((totalMin % 1440) / 60);
+  const minutes = totalMin % 60;
+
+  if (days > 0) return days + '天' + hours + '小时后重置';
+  if (hours > 0) return hours + '小时' + minutes + '分后重置';
+  return minutes + '分钟后重置';
+}
+
 // token 数量显示:亿/万/千分位之外的最小格式(与热力图 formatToken 区分)。
 export function formatTokenCount(n) {
   const value = Number(n) || 0;

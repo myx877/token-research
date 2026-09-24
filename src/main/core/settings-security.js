@@ -8,14 +8,19 @@ const SECRET_SETTING_PATHS = [
   ['ingest', 'dsh', 'token']
 ];
 
+// 这几个键是"用量/费用聚合"的大数据键:渲染层经专用 IPC 取,不进 settings 载荷。
+// **必须在深拷贝之前就摘掉**:原来的写法是"整库深拷贝完再 delete",而 usageDaily 可能是
+// 几十 MB —— 每次广播都要把主进程卡住上百毫秒(实测:切迷你窗口的缓动只跑出第一帧就被卡到终点,
+// 用户观感是"切换的一瞬间卡壳")。
+const BIG_USAGE_KEYS = ['usageDaily', 'usageDailyCost', 'usageDailyPush', 'usageDailyCostPush'];
+
 function sanitizeSettings(storeData) {
-  const clone = JSON.parse(JSON.stringify(storeData || {}));
-  // 用量/费用聚合属于大数据键:渲染层经专用 IPC(get:heatmap / get:dashboard)获取,
-  // 不进 settings 载荷(避免每 60s 整库深拷贝广播放大载荷体积)。
-  delete clone.usageDaily;
-  delete clone.usageDailyCost;
-  delete clone.usageDailyPush;
-  delete clone.usageDailyCostPush;
+  const source = storeData || {};
+  const slim = {};
+  Object.keys(source).forEach(function (key) {
+    if (BIG_USAGE_KEYS.indexOf(key) < 0) slim[key] = source[key];
+  });
+  const clone = JSON.parse(JSON.stringify(slim));
   if (clone.ingest && clone.ingest.dsh) {
     delete clone.ingest.dsh.batchRegistry;
     delete clone.ingest.dsh.sources;

@@ -52,6 +52,34 @@ function wakeMostRelevantWindow(options) {
   return null;
 }
 
+// 启动开窗决策(纯函数,不依赖 electron,可直测)
+//
+// 背景:此前启动以「有没有 DeepSeek API Key」作为开窗门槛 —— 没 Key 只弹填 Key 窗,
+// 有 Key 但没平台 session 时又自动弹平台登录窗,两道墙把人挡在主界面外。
+// 现在:主窗恒开(免凭证启动),凭证一律按需补录。
+//   main          主窗是否创建 —— 恒为 true
+//   apiKeyWindow  是否把「填 API Key 窗」当启动门槛 —— 恒为 false(降级为按需入口)
+//   sessionWindow 是否在启动时自动弹「平台登录窗」 —— 恒为 false(托盘 / session:relogin 按需)
+//   balancePoll   有 API Key 才轮询余额(无 Key 不发必然失败的请求)
+//   usagePoll     有平台 session 才轮询官方用量
+function hasText(value) {
+  return typeof value === 'string' && value.trim() !== '';
+}
+
+function decideStartupWindows(options) {
+  const opts = options || {};
+  const hasApiKey = hasText(opts.apiKey);
+  const hasSession = hasText(opts.sessionToken);
+
+  return {
+    main: true,
+    apiKeyWindow: false,
+    sessionWindow: false,
+    balancePoll: hasApiKey,
+    usagePoll: hasSession
+  };
+}
+
 function skipDeepseekLogin(options) {
   const mainWindow = ensureMainWindow(options);
   if (typeof mainWindow.show === 'function') mainWindow.show();
@@ -67,6 +95,7 @@ function skipDeepseekLogin(options) {
 
 module.exports = {
   MAIN_WINDOW_UNAVAILABLE,
+  decideStartupWindows,
   ensureMainWindow,
   isUsableWindow,
   skipDeepseekLogin,
