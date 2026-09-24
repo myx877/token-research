@@ -84,6 +84,14 @@ jobs:
       - name: Build unsigned macOS package
         run: npm run build:mac
 
+      - name: Upload macOS installer (.dmg)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-installer
+          path: build/*.dmg
+          if-no-files-found: warn
+
   windows-package:
     runs-on: windows-latest
     timeout-minutes: 30
@@ -110,3 +118,11 @@ jobs:
 
       - name: Build unsigned Windows package
         run: npm run build:win
+
+      - name: Upload Windows installer (exe)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: build/*.exe
+          if-no-files-found: warn
