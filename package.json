@@ -14,7 +14,7 @@
     "build:renderer": "npm --prefix renderer run build",
     "dev:renderer": "npm --prefix renderer run dev"
   },
-  "author": "",
+  "author": "姚成 (https://github.com/myx877)",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

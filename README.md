@@ -111,4 +111,13 @@ docs/screenshots README 截图
 
 ## License
 
-MIT
+[MIT](LICENSE) © 2026 姚成 (myx877) and contributors
+
+### 来源与致谢
+
+本项目的早期版本源自 [DDomelette/TokenMonitor](https://github.com/DDomelette/TokenMonitor)
+(该上游仓库未声明许可证)。此后的大量改造 —— DSH 官方会话日志接入(四桶与 DSH 自身累计值逐项对账)、
+跨平台「全部」总览、小窗占比圆环视图、布局网格与旧视图的移除,以及一系列正确性修复 ——
+由本仓库维护者完成。
+
+项目及其第三方依赖各自遵循其自身许可证(见 `package.json` 与 `renderer/package.json`)。
